@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>?? ??? ??</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>?? ??? ??</h1>
+      <p>Flask ???? ???? ??/??? ?? ??? ??? ???</p>
+    </header>
+
+    <main>
+      <section class="card" id="excel-section">
+        <div class="card-header">
+          <h2>?? ???</h2>
+          <p>`.xlsx`, `.xlsm` ??? ????? ? ???? ?? ? ? ????.</p>
+        </div>
+        <form id="excel-form" class="upload-form">
+          <label for="excel-file" class="file-label">?? ?? ??</label>
+          <input
+            type="file"
+            id="excel-file"
+            name="file"
+            accept=".xlsx,.xlsm"
+            required
+          />
+          <button type="submit">???</button>
+        </form>
+        <div id="excel-feedback" class="feedback" role="status"></div>
+      </section>
+
+      <section class="card" id="dataset-section">
+        <div class="card-header">
+          <h2>???? ?? ??</h2>
+          <p>??? ???? ? ???? ??? ??????.</p>
+        </div>
+        <ul id="dataset-list" class="item-list" aria-live="polite"></ul>
+        <div class="table-container" id="dataset-table-container"></div>
+      </section>
+
+      <section class="card" id="text-section">
+        <div class="card-header">
+          <h2>??? ???</h2>
+          <p>`.docx`, `.md`, `.markdown` ??? ???? HTML? ??? ?????.</p>
+        </div>
+        <form id="text-form" class="upload-form">
+          <label for="text-file" class="file-label">??? ?? ??</label>
+          <input
+            type="file"
+            id="text-file"
+            name="file"
+            accept=".docx,.md,.markdown"
+            required
+          />
+          <button type="submit">???</button>
+        </form>
+        <div id="text-feedback" class="feedback" role="status"></div>
+      </section>
+
+      <section class="card" id="text-preview-section">
+        <div class="card-header">
+          <h2>???? ??? ??</h2>
+          <p>???? ???? ???? HTML? ??????.</p>
+        </div>
+        <div class="two-column">
+          <ul id="text-list" class="item-list" aria-live="polite"></ul>
+          <article id="text-preview" class="text-preview" aria-live="polite"></article>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <small>? 2025 ?? ??? ??</small>
+    </footer>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
