@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>파일 업로드 시스템</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>파일 업로드 시스템</h1>
+      <p>Flask 백엔드 API를 사용한 Excel/텍스트 파일 업로드 및 관리 시스템</p>
+    </header>
+
+    <main>
+      <section class="card" id="excel-section">
+        <div class="card-header">
+          <h2>엑셀 업로드</h2>
+          <p>`.xlsx`, `.xlsm` 형식의 파일을 업로드하여 데이터셋으로 저장할 수 있습니다.</p>
+        </div>
+        <form id="excel-form" class="upload-form">
+          <label for="excel-file" class="file-label">파일 선택하기</label>
+          <input
+            type="file"
+            id="excel-file"
+            name="file"
+            accept=".xlsx,.xlsm"
+            required
+          />
+          <button type="submit">업로드</button>
+        </form>
+        <div id="excel-feedback" class="feedback" role="status"></div>
+      </section>
+
+      <section class="card" id="dataset-section">
+        <div class="card-header">
+          <h2>업로드된 데이터셋</h2>
+          <p>업로드한 파일 목록을 확인하고 데이터를 조회할 수 있습니다.</p>
+        </div>
+        <ul id="dataset-list" class="item-list" aria-live="polite"></ul>
+        <div class="table-container" id="dataset-table-container"></div>
+      </section>
+
+      <section class="card" id="text-section">
+        <div class="card-header">
+          <h2>텍스트 업로드</h2>
+          <p>`.docx`, `.md`, `.markdown` 형식의 파일을 HTML로 변환하여 저장합니다.</p>
+        </div>
+        <form id="text-form" class="upload-form">
+          <label for="text-file" class="file-label">텍스트 파일 선택</label>
+          <input
+            type="file"
+            id="text-file"
+            name="file"
+            accept=".docx,.md,.markdown"
+            required
+          />
+          <button type="submit">업로드</button>
+        </form>
+        <div id="text-feedback" class="feedback" role="status"></div>
+      </section>
+
+      <section class="card" id="text-preview-section">
+        <div class="card-header">
+          <h2>업로드된 텍스트 목록</h2>
+          <p>업로드한 텍스트 파일을 HTML로 미리보기할 수 있습니다.</p>
+        </div>
+        <div class="two-column">
+          <ul id="text-list" class="item-list" aria-live="polite"></ul>
+          <article id="text-preview" class="text-preview" aria-live="polite"></article>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <small>© 2025 파일 업로드 시스템</small>
+    </footer>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
