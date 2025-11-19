@@ -37,3 +37,17 @@ class TextContent(Base):
     html_content = Column(Text, nullable=False)
     uploaded_at = Column(DateTime, nullable=False, server_default=func.now())
 
+
+class PDFContent(Base):
+    """Metadata for uploaded PDF files."""
+
+    __tablename__ = "pdf_contents"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    original_filename = Column(String(255), nullable=False)
+    stored_filename = Column(String(255), nullable=False, unique=True)
+    file_size_kb = Column(Integer, nullable=False)  # File size in KB
+    page_count = Column(Integer, nullable=False)
+    preview_text = Column(Text, nullable=True)  # Preview text from first page
+    full_text = Column(Text, nullable=True)  # Full extracted text
+    uploaded_at = Column(DateTime, nullable=False, server_default=func.now())

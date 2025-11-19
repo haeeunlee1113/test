@@ -35,3 +35,10 @@ def get_session() -> Session:
         raise RuntimeError("Database engine not initialized. Call init_engine first.")
     return _session_factory()
 
+
+def init_db() -> None:
+    """Initialize database by creating all tables."""
+    from .models import Dataset, TextContent, PDFContent  # Import models to register them
+
+    engine = init_engine(Config.DATABASE_URL)
+    Base.metadata.create_all(engine)
