@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>파일 업로드 - POSCO FLOW Market Intelligence</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="dashboard-header">
+      <h1>파일 업로드</h1>
+    </header>
+
+    <div class="dashboard-container">
+      <main class="main-content">
+        <!-- Excel 업로드 섹션 - Dry Bulk -->
+        <section class="upload-section">
+          <div class="upload-card">
+            <h3>Dry Bulk Excel 파일 업로드</h3>
+            <p>Dry Bulk 관련 Excel 파일(.xlsx, .xls)을 업로드하세요.</p>
+            <form id="excel-upload-form" class="upload-form">
+              <label for="excel-file-input" class="file-label">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 7H12.5V2.5H7.5V7H5L10 12L15 7Z" fill="currentColor"/>
+                  <path d="M2.5 15H17.5V17.5H2.5V15Z" fill="currentColor"/>
+                </svg>
+                <span id="excel-file-name">Excel 파일 선택</span>
+              </label>
+              <input
+                type="file"
+                id="excel-file-input"
+                accept=".xlsx,.xls"
+                style="display: none;"
+              />
+              <button type="submit" class="upload-btn" id="excel-upload-btn">
+                업로드
+              </button>
+              <div id="excel-upload-feedback" class="upload-feedback"></div>
+            </form>
+          </div>
+        </section>
+
+        <!-- Excel 업로드 섹션 - Container -->
+        <section class="upload-section">
+          <div class="upload-card">
+            <h3>Container Excel 파일 업로드</h3>
+            <p>Container 관련 Excel 파일(.xlsx, .xls)을 업로드하세요.</p>
+            <form id="container-excel-upload-form" class="upload-form">
+              <label for="container-excel-file-input" class="file-label">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 7H12.5V2.5H7.5V7H5L10 12L15 7Z" fill="currentColor"/>
+                  <path d="M2.5 15H17.5V17.5H2.5V15Z" fill="currentColor"/>
+                </svg>
+                <span id="container-excel-file-name">Excel 파일 선택</span>
+              </label>
+              <input
+                type="file"
+                id="container-excel-file-input"
+                accept=".xlsx,.xls"
+                style="display: none;"
+              />
+              <button type="submit" class="upload-btn" id="container-excel-upload-btn">
+                업로드
+              </button>
+              <div id="container-excel-upload-feedback" class="upload-feedback"></div>
+            </form>
+          </div>
+        </section>
+
+        <!-- 리포트 업로드 섹션 -->
+        <section class="upload-section">
+          <h2 style="font-size: 1.3rem; font-weight: 700; color: #1f2937; margin-bottom: 1.5rem;">리포트 업로드</h2>
+          <div class="docx-upload-grid">
+            <!-- Drybulk · Clarksons/Drewry -->
+            <div class="docx-upload-item">
+              <h4>Drybulk · Clarksons/Drewry</h4>
+              <form class="docx-upload-form" data-category="drybulk_clarksons_drewry">
+                <label for="drybulk-clarksons-file" class="file-label docx-file-label">
+                  <span class="docx-file-name">HTML / JSON 파일 선택</span>
+                </label>
+                <input
+                  type="file"
+                  id="drybulk-clarksons-file"
+                  class="docx-file-input"
+                  accept=".html,.htm,.json"
+                  style="display: none;"
+                />
+                <button type="submit" class="upload-btn" style="width: 100%; margin-top: 0.5rem;">
+                  업로드
+                </button>
+                <div class="docx-upload-feedback upload-feedback"></div>
+              </form>
+            </div>
+
+            <!-- Drybulk · 뉴스 미디어 -->
+            <div class="docx-upload-item">
+              <h4>Drybulk · 뉴스 미디어</h4>
+              <form class="docx-upload-form" data-category="drybulk_news_media">
+                <label for="drybulk-news-file" class="file-label docx-file-label">
+                  <span class="docx-file-name">HTML / JSON 파일 선택</span>
+                </label>
+                <input
+                  type="file"
+                  id="drybulk-news-file"
+                  class="docx-file-input"
+                  accept=".html,.htm,.json"
+                  style="display: none;"
+                />
+                <button type="submit" class="upload-btn" style="width: 100%; margin-top: 0.5rem;">
+                  업로드
+                </button>
+                <div class="docx-upload-feedback upload-feedback"></div>
+              </form>
+            </div>
+
+            <!-- Drybulk Monthly -->
+            <div class="docx-upload-item">
+              <h4>Drybulk Monthly</h4>
+              <form class="docx-upload-form" data-category="drybulk_monthly">
+                <label for="drybulk-monthly-file" class="file-label docx-file-label">
+                  <span class="docx-file-name">HTML / JSON 파일 선택</span>
+                </label>
+                <input
+                  type="file"
+                  id="drybulk-monthly-file"
+                  class="docx-file-input"
+                  accept=".html,.htm,.json"
+                  style="display: none;"
+                />
+                <button type="submit" class="upload-btn" style="width: 100%; margin-top: 0.5rem;">
+                  업로드
+                </button>
+                <div class="docx-upload-feedback upload-feedback"></div>
+              </form>
+            </div>
+
+            <!-- Container · Clarksons -->
+            <div class="docx-upload-item">
+              <h4>Container · Clarksons</h4>
+              <form class="docx-upload-form" data-category="container_clarksons">
+                <label for="container-clarksons-file" class="file-label docx-file-label">
+                  <span class="docx-file-name">HTML / JSON 파일 선택</span>
+                </label>
+                <input
+                  type="file"
+                  id="container-clarksons-file"
+                  class="docx-file-input"
+                  accept=".html,.htm,.json"
+                  style="display: none;"
+                />
+                <button type="submit" class="upload-btn" style="width: 100%; margin-top: 0.5rem;">
+                  업로드
+                </button>
+                <div class="docx-upload-feedback upload-feedback"></div>
+              </form>
+            </div>
+
+            <!-- Container · 뉴스 미디어 -->
+            <div class="docx-upload-item">
+              <h4>Container · 뉴스 미디어</h4>
+              <form class="docx-upload-form" data-category="container_news_media">
+                <label for="container-news-file" class="file-label docx-file-label">
+                  <span class="docx-file-name">HTML / JSON 파일 선택</span>
+                </label>
+                <input
+                  type="file"
+                  id="container-news-file"
+                  class="docx-file-input"
+                  accept=".html,.htm,.json"
+                  style="display: none;"
+                />
+                <button type="submit" class="upload-btn" style="width: 100%; margin-top: 0.5rem;">
+                  업로드
+                </button>
+                <div class="docx-upload-feedback upload-feedback"></div>
+              </form>
+            </div>
+
+            <!-- Weekly Issues -->
+            <div class="docx-upload-item">
+              <h4>Weekly Issues</h4>
+              <form class="docx-upload-form" data-category="weekly_issues">
+                <label for="weekly-issues-file" class="file-label docx-file-label">
+                  <span class="docx-file-name">HTML / JSON 파일 선택</span>
+                </label>
+                <input
+                  type="file"
+                  id="weekly-issues-file"
+                  class="docx-file-input"
+                  accept=".html,.htm,.json"
+                  style="display: none;"
+                />
+                <button type="submit" class="upload-btn" style="width: 100%; margin-top: 0.5rem;">
+                  업로드
+                </button>
+                <div class="docx-upload-feedback upload-feedback"></div>
+              </form>
+            </div>
+
+            <!-- 물류 속보 -->
+            <div class="docx-upload-item">
+              <h4>물류 속보</h4>
+              <form class="docx-upload-form" data-category="breaking_news">
+                <label for="breaking-news-file" class="file-label docx-file-label">
+                  <span class="docx-file-name">HTML / JSON 파일 선택</span>
+                </label>
+                <input
+                  type="file"
+                  id="breaking-news-file"
+                  class="docx-file-input"
+                  accept=".html,.htm,.json"
+                  style="display: none;"
+                />
+                <button type="submit" class="upload-btn" style="width: 100%; margin-top: 0.5rem;">
+                  업로드
+                </button>
+                <div class="docx-upload-feedback upload-feedback"></div>
+              </form>
+            </div>
+
+            <!-- 심층 리포트 -->
+            <div class="docx-upload-item">
+              <h4>심층 리포트</h4>
+              <form class="docx-upload-form" data-category="deep_research">
+                <label for="deep-research-file" class="file-label docx-file-label">
+                  <span class="docx-file-name">HTML / JSON 파일 선택</span>
+                </label>
+                <input
+                  type="file"
+                  id="deep-research-file"
+                  class="docx-file-input"
+                  accept=".html,.htm,.json"
+                  style="display: none;"
+                />
+                <button type="submit" class="upload-btn" style="width: 100%; margin-top: 0.5rem;">
+                  업로드
+                </button>
+                <div class="docx-upload-feedback upload-feedback"></div>
+              </form>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
+
