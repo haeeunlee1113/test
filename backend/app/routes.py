@@ -4,13 +4,25 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from datetime import datetime
 
 from flask import Blueprint, jsonify, request, send_file
 from werkzeug.exceptions import RequestEntityTooLarge
 
 from .config import Config
 from .database import get_session
-from .models import Dataset, TextContent, PDFContent
+from .models import (
+    Dataset,
+    PDFContent,
+    DrybulkClarksonsReport,
+    DrybulkNewsReport,
+    ContainerClarksonsReport,
+    ContainerNewsReport,
+    WeeklyIssuesReport,
+    BreakingNewsReport,
+    DeepResearchReport,
+    DrybulkMonthlyReport,
+)
 from .utils import (
     is_allowed_excel_file,
     is_allowed_text_file,
@@ -25,6 +37,28 @@ from .utils import (
 )
 
 api_bp = Blueprint("api", __name__)
+
+REPORT_TABLES = {
+    "drybulk_clarksons_drewry": DrybulkClarksonsReport,
+    "drybulk_news_media": DrybulkNewsReport,
+    "drybulk_monthly": DrybulkMonthlyReport,
+    "container_clarksons": ContainerClarksonsReport,
+    "container_news_media": ContainerNewsReport,
+    "weekly_issues": WeeklyIssuesReport,
+    "breaking_news": BreakingNewsReport,
+    "deep_research": DeepResearchReport,
+}
+
+REPORT_CATEGORY_LABELS = {
+    "drybulk_clarksons_drewry": "Drybulk Clarksons/Drewry",
+    "drybulk_news_media": "Drybulk News Media",
+    "drybulk_monthly": "Drybulk Monthly",
+    "container_clarksons": "Container Clarksons",
+    "container_news_media": "Container News Media",
+    "weekly_issues": "Weekly Issues",
+    "breaking_news": "Breaking News",
+    "deep_research": "Deep Research",
+}
 
 
 @api_bp.errorhandler(RequestEntityTooLarge)
@@ -136,13 +170,25 @@ def upload_text():
         return jsonify({"error": "파일을 선택하세요."}), 400
 
     if not is_allowed_text_file(file.filename):
-        return jsonify({"error": "텍스트 파일(.md, .docx)만 업로드 가능합니다."}), 400
+        return jsonify({"error": "HTML(.html, .htm) 또는 JSON(.json) 파일만 업로드 가능합니다."}), 400
+
+    report_category = request.form.get("category")
+    if not report_category or report_category not in REPORT_TABLES:
+        return jsonify({"error": "유효하지 않은 보고서 카테고리입니다."}), 400
+    target_model = REPORT_TABLES[report_category]
 
     session = get_session()
     try:
         # Determine content type
         ext = Path(file.filename).suffix.lower()
-        content_type = "markdown" if ext == ".md" else "docx"
+        if ext == ".md":
+            content_type = "markdown"
+        elif ext in (".html", ".htm"):
+            content_type = "html"
+        elif ext == ".json":
+            content_type = "json"
+        else:
+            return jsonify({"error": "지원하지 않는 파일 형식입니다. HTML 또는 JSON 파일을 업로드하세요."}), 400
 
         # Save file
         saved_path = save_upload_file(file, Config.TEXT_FOLDER)
@@ -151,23 +197,21 @@ def upload_text():
         html_content = convert_text_to_html(saved_path, content_type)
 
         # Save to database
-        text_content = TextContent(
+        report_entry = target_model(
             original_filename=file.filename,
             stored_filename=saved_path.name,
             content_type=content_type,
             html_content=html_content,
         )
-        session.add(text_content)
+        session.add(report_entry)
+
         session.commit()
 
         return jsonify(
             {
-                "text": {
-                    "id": text_content.id,
-                    "original_filename": text_content.original_filename,
-                    "content_type": text_content.content_type,
-                    "uploaded_at": text_content.uploaded_at.isoformat(),
-                },
+                "status": "success",
+                "category": report_category,
+                "filename": file.filename,
             }
         )
     except Exception as e:
@@ -178,6 +222,60 @@ def upload_text():
     finally:
         session.close()
 
+
+@api_bp.route("/reports/<category>", methods=["GET"])
+def get_report_by_category(category: str):
+    """Retrieve latest report document by category (optional month filter)."""
+    if not category or category not in REPORT_TABLES:
+        return jsonify({"error": "지원하지 않는 카테고리입니다."}), 400
+
+    month_param = request.args.get("month")
+    suffix = None
+    requested_month = None
+    if month_param:
+        normalized = month_param.replace("/", "-")
+        for fmt in ("%Y-%m", "%y-%m"):
+            try:
+                dt = datetime.strptime(normalized, fmt)
+                suffix = dt.strftime("%y_%m")
+                requested_month = dt.strftime("%Y-%m")
+                break
+            except ValueError:
+                continue
+
+    table_cls = REPORT_TABLES[category]
+
+    session = get_session()
+    try:
+        query = session.query(table_cls)
+        if suffix:
+            like_pattern = f"%{suffix}%"
+            query = query.filter(table_cls.original_filename.ilike(like_pattern))
+
+        report = query.order_by(table_cls.uploaded_at.desc()).first()
+
+        if not report and suffix:
+            # Fallback to most recent report even if suffix filter failed
+            report = session.query(table_cls).order_by(table_cls.uploaded_at.desc()).first()
+            requested_month = None
+
+        if not report:
+            return jsonify({"error": "해당 조건에 맞는 보고서를 찾을 수 없습니다."}), 404
+
+        return jsonify(
+            {
+                "report": {
+                    "category": category,
+                    "category_label": REPORT_CATEGORY_LABELS.get(category, category),
+                    "original_filename": report.original_filename,
+                    "uploaded_at": report.uploaded_at.isoformat(),
+                    "requested_month": requested_month,
+                    "html_content": report.html_content,
+                }
+            }
+        )
+    finally:
+        session.close()
 
 @api_bp.route("/upload/pdf", methods=["POST"])
 def upload_pdf():
@@ -279,51 +377,6 @@ def get_dataset(dataset_id):
                     "uploaded_at": dataset.uploaded_at.isoformat(),
                 },
                 "data": excel_data["data"],
-            }
-        )
-    finally:
-        session.close()
-
-
-@api_bp.route("/texts", methods=["GET"])
-def list_texts():
-    """List all uploaded text files."""
-    session = get_session()
-    try:
-        texts = session.query(TextContent).order_by(TextContent.uploaded_at.desc()).all()
-        return jsonify(
-            [
-                {
-                    "id": t.id,
-                    "original_filename": t.original_filename,
-                    "content_type": t.content_type,
-                    "uploaded_at": t.uploaded_at.isoformat(),
-                }
-                for t in texts
-            ]
-        )
-    finally:
-        session.close()
-
-
-@api_bp.route("/texts/<int:text_id>", methods=["GET"])
-def get_text(text_id):
-    """Get text content by ID."""
-    session = get_session()
-    try:
-        text = session.query(TextContent).filter_by(id=text_id).first()
-        if not text:
-            return jsonify({"error": "텍스트 파일을 찾을 수 없습니다."}), 404
-
-        return jsonify(
-            {
-                "text": {
-                    "id": text.id,
-                    "original_filename": text.original_filename,
-                    "content_type": text.content_type,
-                    "html_content": text.html_content,
-                    "uploaded_at": text.uploaded_at.isoformat(),
-                },
             }
         )
     finally:
@@ -482,7 +535,13 @@ def get_chart_data():
         
         seen_base_filenames = {}  # group_name -> {base_filename: (dataset_info, uploaded_at)}
         
+        # Dry Bulk 관련 그룹만 처리 (container 관련 그룹은 제외)
+        drybulk_groups = ["drybulk_trade", "fleet_development", "indices"]
+        
         for group_name, dataset_ids in groups.items():
+            # Dry Bulk 관련 그룹만 처리
+            if group_name not in drybulk_groups:
+                continue
             # 각 그룹의 데이터셋을 업로드 시간 순으로 정렬 (오래된 것부터)
             datasets_list = []
             for dataset_id in dataset_ids:
@@ -553,5 +612,189 @@ def get_chart_data():
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": f"그래프 데이터를 가져오는 중 오류가 발생했습니다: {str(e)}"}), 500
+    finally:
+        session.close()
+
+
+@api_bp.route("/charts/data/bci", methods=["GET"])
+def get_bci_chart_data():
+    """BCI Index 전용 엔드포인트 - 빠른 응답을 위해 BCI 5TC 데이터만 반환."""
+    from .utils import get_current_month_year_suffix
+    
+    session = get_session()
+    try:
+        # 오늘 날짜 기준 월_년 접미사
+        current_suffix = get_current_month_year_suffix().lower()
+        
+        # BCI 5TC 파일 찾기
+        datasets = session.query(Dataset).filter(
+            Dataset.original_filename.ilike(f'%BCI 5TC%{current_suffix}%')
+        ).order_by(Dataset.uploaded_at.desc()).all()
+        
+        if not datasets:
+            return jsonify({"error": "BCI 5TC 데이터를 찾을 수 없습니다."}), 404
+        
+        # 가장 최근 파일 사용
+        dataset = datasets[0]
+        file_path = Config.EXCEL_FOLDER / dataset.stored_filename
+        
+        if not file_path.exists():
+            return jsonify({"error": "BCI 5TC 파일이 서버에서 삭제되었습니다."}), 404
+        
+        # 엑셀 데이터 읽기
+        excel_data = read_excel_file(file_path, original_filename=dataset.original_filename)
+        
+        # Date 컬럼 찾기
+        date_col = find_date_column(excel_data.get("selected_columns", excel_data.get("columns", [])))
+        if not date_col:
+            return jsonify({"error": "날짜 컬럼을 찾을 수 없습니다."}), 404
+        
+        # 534544 코드가 포함된 컬럼 찾기
+        target_column = None
+        for col in excel_data.get("selected_columns", excel_data.get("columns", [])):
+            if col != date_col and '534544' in str(col):
+                target_column = col
+                break
+        
+        if not target_column:
+            return jsonify({"error": "BCI 컬럼(534544)을 찾을 수 없습니다."}), 404
+        
+        # 2021년 이후 필터링
+        filtered_data = filter_data_by_year(
+            excel_data.get("data", []),
+            date_col,
+            year=2021
+        )
+        
+        if not filtered_data:
+            return jsonify({"error": "2021년 이후 데이터가 없습니다."}), 404
+        
+        # 결과 반환
+        result = {
+            "filename": dataset.original_filename,
+            "date_column": date_col,
+            "target_column": target_column,
+            "data": filtered_data,
+            "columns": excel_data.get("selected_columns", [])
+        }
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": f"BCI 데이터를 가져오는 중 오류가 발생했습니다: {str(e)}"}), 500
+    finally:
+        session.close()
+
+
+@api_bp.route("/charts/data/container", methods=["GET"])
+def get_container_chart_data():
+    """Container 그래프 데이터를 반환 (2021년 이후 필터링, 그룹별). 오늘 날짜 기준 _월_년 형식 파일만 사용."""
+    from .utils import get_current_month_year_suffix
+    
+    session = get_session()
+    try:
+        # 오늘 날짜 기준 월_년 접미사
+        current_suffix = get_current_month_year_suffix().lower()
+        
+        # 카테고리별로 데이터셋 그룹화
+        groups = group_datasets_by_category()
+        
+        # 디버깅: 각 그룹의 파일명 출력
+        print("\n=== Container 그래프 데이터 디버깅 정보 ===")
+        print(f"현재 접미사: {current_suffix}")
+        print(f"\nContainer Trade & Fleet 파일들:")
+        for dataset_id in groups.get("container_trade_fleet", []):
+            dataset = session.query(Dataset).filter_by(id=dataset_id).first()
+            if dataset:
+                print(f"  - {dataset.original_filename} (ID: {dataset.id})")
+        print(f"\nSCFI Weekly 파일들:")
+        for dataset_id in groups.get("scfi_weekly", []):
+            dataset = session.query(Dataset).filter_by(id=dataset_id).first()
+            if dataset:
+                print(f"  - {dataset.original_filename} (ID: {dataset.id})")
+        print("=" * 50)
+        
+        result = {
+            "container_trade_fleet": [],
+            "scfi_weekly": []
+        }
+        
+        # 각 그룹별로 데이터 수집
+        import re
+        
+        def get_base_filename(filename: str) -> str:
+            """파일명에서 suffix를 제거한 기본 이름 반환"""
+            pattern = r'_\d{2}_\d{2}\.xlsx$'
+            base = re.sub(pattern, '', filename, flags=re.IGNORECASE)
+            return base.lower()
+        
+        seen_base_filenames = {}
+        
+        for group_name in ["container_trade_fleet", "scfi_weekly"]:
+            dataset_ids = groups.get(group_name, [])
+            
+            # 각 그룹의 데이터셋을 업로드 시간 순으로 정렬
+            datasets_list = []
+            for dataset_id in dataset_ids:
+                dataset = session.query(Dataset).filter_by(id=dataset_id).first()
+                if dataset:
+                    datasets_list.append(dataset)
+            
+            datasets_list.sort(key=lambda d: d.uploaded_at)
+            
+            for dataset in datasets_list:
+                file_path = Config.EXCEL_FOLDER / dataset.stored_filename
+                if not file_path.exists():
+                    continue
+                
+                filename = dataset.original_filename
+                
+                # 오늘 날짜 기준 _월_년 형식이 포함된 파일만 처리
+                if current_suffix not in filename.lower():
+                    continue
+                
+                base_filename = get_base_filename(filename)
+                
+                # 이미 같은 기본 파일명이 있으면 제거
+                if group_name not in seen_base_filenames:
+                    seen_base_filenames[group_name] = {}
+                
+                if base_filename in seen_base_filenames[group_name]:
+                    result[group_name] = [r for r in result[group_name] if get_base_filename(r.get("filename", "")) != base_filename]
+                
+                # 엑셀 데이터 읽기
+                excel_data = read_excel_file(file_path, original_filename=dataset.original_filename)
+                
+                # Date 컬럼 찾기
+                date_col = find_date_column(excel_data.get("selected_columns", excel_data.get("columns", [])))
+                if not date_col:
+                    continue
+                
+                # 2021년 이후 필터링
+                filtered_data = filter_data_by_year(
+                    excel_data.get("data", []),
+                    date_col,
+                    year=2021
+                )
+                
+                if filtered_data:
+                    dataset_info = {
+                        "dataset_id": dataset.id,
+                        "filename": dataset.original_filename,
+                        "columns": excel_data.get("selected_columns", []),
+                        "data": filtered_data,
+                        "date_column": date_col
+                    }
+                    seen_base_filenames[group_name][base_filename] = (dataset_info, dataset.uploaded_at)
+                    result[group_name].append(dataset_info)
+        
+        # 최종 결과에 사용된 파일명 출력
+        print("\n=== 최종 Container 그래프에 사용된 파일 ===")
+        print(f"Container Trade & Fleet: {[r['filename'] for r in result['container_trade_fleet']]}")
+        print(f"SCFI Weekly: {[r['filename'] for r in result['scfi_weekly']]}")
+        print("=" * 50)
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": f"Container 그래프 데이터를 가져오는 중 오류가 발생했습니다: {str(e)}"}), 500
     finally:
         session.close()

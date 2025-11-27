@@ -31,11 +31,14 @@ FILE_CODE_MAP = {
     "SIN_Timeseries_Handy Fleet Development": ["30209"],
     "SIN_Timeseries_Panamax Fleet Development": ["30204"],
     "SIN_Timeseries_Supramax Fleet Development": ["30207"],
+    "SIN_Timeseries_Containership Fleet Development Annual": ["30977", "534501"],
+    "SIN_Timeseries_Container Trade Annual": ["548622"],
+    "SIN_Timeseries_Container SCFI": ["534015", "534018", "534021"],
 }
 
 # Allowed file extensions
 EXCEL_EXTENSIONS = {".xlsx", ".xls"}
-TEXT_EXTENSIONS = {".md", ".docx"}
+TEXT_EXTENSIONS = {".md", ".html", ".htm", ".json"}
 PDF_EXTENSIONS = {".pdf"}
 
 
@@ -309,6 +312,9 @@ def read_excel_file(file_path: Path, extract_labels: bool = True, sheet_name: st
     
     # 컬럼명 추출 기능 활성화 시 (6행부터 읽기 전에 컬럼명 먼저 추출)
     labeled_cols = None
+    cargos = None
+    units = None
+    upper_text = None
     if extract_labels and ext == '.xlsx':
         try:
             labeled_cols, cargos, units, upper_text = extract_header_labels(file_path, sheet_name=sheet_name)
@@ -394,10 +400,10 @@ def read_excel_file(file_path: Path, extract_labels: bool = True, sheet_name: st
         "codes_used": codes_used,  # 사용된 코드 목록
     }
     
-    # 컬럼명 추출 정보 추가
+    # 컬럼명 추출 정보 추가 (이미 추출한 정보 재사용)
     if extract_labels and ext == '.xlsx' and labeled_cols is not None:
         try:
-            _, cargos, units, upper_text = extract_header_labels(file_path, sheet_name=sheet_name)
+            # 이미 추출한 정보 재사용 (중복 호출 방지)
             result["labeled_columns"] = labeled_cols
             
             # 선택된 컬럼에 해당하는 라벨링된 컬럼명도 필터링
@@ -508,7 +514,9 @@ def group_datasets_by_category() -> dict:
         {
             "drybulk_trade": [dataset_ids],
             "fleet_development": [dataset_ids],
-            "indices": [dataset_ids]
+            "indices": [dataset_ids],
+            "container_trade_fleet": [dataset_ids],
+            "scfi_weekly": [dataset_ids]
         }
     """
     from .database import get_session
@@ -521,7 +529,9 @@ def group_datasets_by_category() -> dict:
         groups = {
             "drybulk_trade": [],
             "fleet_development": [],
-            "indices": []
+            "indices": [],
+            "container_trade_fleet": [],
+            "scfi_weekly": []
         }
         
         # 현재 월_년 접미사 생성
@@ -537,9 +547,16 @@ def group_datasets_by_category() -> dict:
             if "dry bulk trade" in filename:
                 groups["drybulk_trade"].append(dataset.id)
             elif "fleet development" in filename:
-                groups["fleet_development"].append(dataset.id)
+                if "containership" in filename or ("container" in filename and "fleet" in filename):
+                    groups["container_trade_fleet"].append(dataset.id)
+                else:
+                    groups["fleet_development"].append(dataset.id)
             elif any(x in filename for x in ["bci", "bhsi", "bpi", "bsi"]):
                 groups["indices"].append(dataset.id)
+            elif "container trade" in filename:
+                groups["container_trade_fleet"].append(dataset.id)
+            elif "container scfi" in filename:
+                groups["scfi_weekly"].append(dataset.id)
         
         return groups
     finally:
@@ -565,6 +582,20 @@ def convert_text_to_html(file_path: Path, content_type: str) -> str:
                 html_parts.append(f"<p>{para.text}</p>")
         html_parts.append("</div>")
         return "\n".join(html_parts)
+    elif content_type == "html":
+        with open(file_path, "r", encoding="utf-8") as f:
+            return f.read()
+    elif content_type == "json":
+        import json
+
+        with open(file_path, "r", encoding="utf-8") as f:
+            try:
+                payload = json.load(f)
+                pretty = json.dumps(payload, ensure_ascii=False, indent=2)
+            except json.JSONDecodeError:
+                f.seek(0)
+                pretty = f.read()
+        return f"<pre><code>{pretty}</code></pre>"
 
     return "<p>吏?먰븯吏 ?딅뒗 ?뚯씪 ?뺤떇?낅땲??</p>"
 

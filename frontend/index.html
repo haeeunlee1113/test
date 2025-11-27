@@ -3,79 +3,100 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>파일 업로드 시스템</title>
+    <title>POSCO FLOW Market Intelligence</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header>
-      <h1>파일 업로드 시스템</h1>
-      <p>Flask 백엔드 API를 사용한 Excel/텍스트 파일 업로드 및 관리 시스템</p>
+    <header class="dashboard-header">
+      <h1>POSCO FLOW Market Intelligence</h1>
     </header>
 
-    <main>
-      <section class="card" id="excel-section">
-        <div class="card-header">
-          <h2>엑셀 업로드</h2>
-          <p>`.xlsx`, `.xlsm` 형식의 파일을 업로드하여 데이터셋으로 저장할 수 있습니다.</p>
-        </div>
-        <form id="excel-form" class="upload-form">
-          <label for="excel-file" class="file-label">파일 선택하기</label>
-          <input
-            type="file"
-            id="excel-file"
-            name="file"
-            accept=".xlsx,.xlsm"
-            required
-          />
-          <button type="submit">업로드</button>
-        </form>
-        <div id="excel-feedback" class="feedback" role="status"></div>
-      </section>
+    <div class="dashboard-container">
+      <main class="main-content">
+        <!-- 상단 섹션: Dry Bulk & Container -->
+        <section class="top-section">
+          <!-- Dry Bulk 박스 -->
+          <div class="category-box">
+            <h2 class="category-title">Dry Bulk</h2>
+            <div class="category-content">
+              <!-- 그래프 영역 -->
+              <div class="graph-container" style="height: 400px; position: relative;">
+                <canvas id="drybulkBCIChart"></canvas>
+                <div id="drybulkBCILoading" class="loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">데이터를 불러오는 중...</div>
+              </div>
+              <!-- 버튼들 -->
+              <div class="category-buttons">
+                <a href="/drybulk" class="category-btn category-btn-blue">
+                  Clarksons/Drewry<br>월간 보고서
+                </a>
+                <a href="/drybulk-half" class="category-btn category-btn-blue">
+                  Clarksons<br>반기 보고서
+                </a>
+                <a href="/drybulk-quarter" class="category-btn category-btn-blue">
+                  Drewry<br>분기 보고서
+                </a>
+                <a href="/drybulk-media" class="category-btn category-btn-small">
+                  물류 미디어<br>월간 전망
+                </a>
+              </div>
+            </div>
+          </div>
 
-      <section class="card" id="dataset-section">
-        <div class="card-header">
-          <h2>업로드된 데이터셋</h2>
-          <p>업로드한 파일 목록을 확인하고 데이터를 조회할 수 있습니다.</p>
-        </div>
-        <ul id="dataset-list" class="item-list" aria-live="polite"></ul>
-        <div class="table-container" id="dataset-table-container"></div>
-      </section>
+          <!-- Container 박스 -->
+          <div class="category-box">
+            <h2 class="category-title">Container</h2>
+            <div class="category-content">
+              <!-- 그래프 영역 -->
+              <div class="graph-container" style="height: 400px; position: relative;">
+                <canvas id="containerSCFIChart"></canvas>
+                <div id="containerSCFILoading" class="loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">데이터를 불러오는 중...</div>
+              </div>
+              <!-- 버튼들 -->
+              <div class="category-buttons">
+                <a href="/container" class="category-btn category-btn-blue">
+                  Clarksons<br>월간 보고서
+                </a>
+                <a href="/container-quarter" class="category-btn category-btn-blue">
+                  Clarksons<br>분기 보고서
+                </a>
+                <a href="/container-media" class="category-btn category-btn-small">
+                  물류 미디어<br>월간 전망
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
 
-      <section class="card" id="text-section">
-        <div class="card-header">
-          <h2>텍스트 업로드</h2>
-          <p>`.docx`, `.md`, `.markdown` 형식의 파일을 HTML로 변환하여 저장합니다.</p>
-        </div>
-        <form id="text-form" class="upload-form">
-          <label for="text-file" class="file-label">텍스트 파일 선택</label>
-          <input
-            type="file"
-            id="text-file"
-            name="file"
-            accept=".docx,.md,.markdown"
-            required
-          />
-          <button type="submit">업로드</button>
-        </form>
-        <div id="text-feedback" class="feedback" role="status"></div>
-      </section>
+        <!-- 하단 섹션: 3개의 가로 박스 -->
+        <section class="bottom-section">
+          <!-- Weekly Issues Top 10 -->
+          <div class="bottom-box">
+            <h2 class="bottom-box-title">Weekly Issues Top 10</h2>
+            <div class="bottom-box-content">
+              <!-- 내용은 나중에 추가 -->
+            </div>
+          </div>
 
-      <section class="card" id="text-preview-section">
-        <div class="card-header">
-          <h2>업로드된 텍스트 목록</h2>
-          <p>업로드한 텍스트 파일을 HTML로 미리보기할 수 있습니다.</p>
-        </div>
-        <div class="two-column">
-          <ul id="text-list" class="item-list" aria-live="polite"></ul>
-          <article id="text-preview" class="text-preview" aria-live="polite"></article>
-        </div>
-      </section>
-    </main>
+          <!-- 물류 속보 -->
+          <div class="bottom-box">
+            <h2 class="bottom-box-title">물류 속보</h2>
+            <div class="bottom-box-content">
+              <!-- 내용은 나중에 추가 -->
+            </div>
+          </div>
 
-    <footer>
-      <small>© 2025 파일 업로드 시스템</small>
-    </footer>
+          <!-- 심층 리포트 -->
+          <div class="bottom-box">
+            <h2 class="bottom-box-title">심층 리포트</h2>
+            <div class="bottom-box-content">
+              <!-- 내용은 나중에 추가 -->
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
 
-    <script src="app.js" type="module"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="main.js"></script>
   </body>
 </html>

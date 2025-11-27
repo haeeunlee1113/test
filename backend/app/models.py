@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import uuid
 
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from sqlalchemy.sql import func
@@ -25,17 +26,49 @@ class Dataset(Base):
     uploaded_at = Column(DateTime, nullable=False, server_default=func.now())
 
 
-class TextContent(Base):
-    """Metadata and HTML content for uploaded text files."""
+class ReportDocumentBase(Base):
+    """Base table for report uploads."""
 
-    __tablename__ = "text_contents"
+    __abstract__ = True
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(String(32), primary_key=True, default=lambda: uuid.uuid4().hex)
     original_filename = Column(String(255), nullable=False)
     stored_filename = Column(String(255), nullable=False, unique=True)
-    content_type = Column(String(50), nullable=False)  # 'markdown' or 'docx'
+    content_type = Column(String(50), nullable=False)
     html_content = Column(Text, nullable=False)
     uploaded_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
+class DrybulkClarksonsReport(ReportDocumentBase):
+    __tablename__ = "reports_drybulk_clarksons"
+
+
+class DrybulkNewsReport(ReportDocumentBase):
+    __tablename__ = "reports_drybulk_news"
+
+
+class ContainerClarksonsReport(ReportDocumentBase):
+    __tablename__ = "reports_container_clarksons"
+
+
+class ContainerNewsReport(ReportDocumentBase):
+    __tablename__ = "reports_container_news"
+
+
+class WeeklyIssuesReport(ReportDocumentBase):
+    __tablename__ = "reports_weekly_issues"
+
+
+class BreakingNewsReport(ReportDocumentBase):
+    __tablename__ = "reports_breaking_news"
+
+
+class DeepResearchReport(ReportDocumentBase):
+    __tablename__ = "reports_deep_research"
+
+
+class DrybulkMonthlyReport(ReportDocumentBase):
+    __tablename__ = "reports_drybulk_monthly"
 
 
 class PDFContent(Base):

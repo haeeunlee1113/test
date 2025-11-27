@@ -38,7 +38,18 @@ def get_session() -> Session:
 
 def init_db() -> None:
     """Initialize database by creating all tables."""
-    from .models import Dataset, TextContent, PDFContent  # Import models to register them
+    from .models import (
+        Dataset,
+        PDFContent,
+        DrybulkClarksonsReport,
+        DrybulkNewsReport,
+        ContainerClarksonsReport,
+        ContainerNewsReport,
+        WeeklyIssuesReport,
+        BreakingNewsReport,
+        DeepResearchReport,
+        DrybulkMonthlyReport,
+    )
 
     engine = init_engine(Config.DATABASE_URL)
     Base.metadata.create_all(engine)
