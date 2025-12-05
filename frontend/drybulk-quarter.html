@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Drewry 분기 보고서 - POSCO FLOW Market Intelligence</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+      body {
+        background: #f5f5f5;
+        padding: 0;
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        font-size: 16px;
+      }
+      .report-container {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        background: white;
+      }
+      .report-header {
+        background: #111827;
+        color: white;
+        padding: 1.5rem 2rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .report-header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+      }
+      .report-body {
+        display: flex;
+        flex: 1;
+        min-height: calc(100vh - 80px);
+      }
+      .date-sidebar {
+        width: 200px;
+        background: #1f2937;
+        padding: 1.5rem 0;
+        border-right: 1px solid #374151;
+      }
+      .date-tabs {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0 1rem;
+      }
+      .date-tab {
+        padding: 0.75rem 1rem;
+        background: transparent;
+        border: 1px solid #4b5563;
+        border-radius: 6px;
+        color: #d1d5db;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-align: left;
+        transition: all 0.2s;
+      }
+      .date-tab:hover {
+        background: #374151;
+        border-color: #60a5fa;
+        color: white;
+      }
+      .date-tab.active {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        color: white;
+        font-weight: 600;
+      }
+      .content-area {
+        flex: 1;
+        padding: 2rem;
+        background: #f5f5f5;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+      .content-wrapper {
+        width: 95%;
+        margin: 0 auto;
+      }
+      .report-section {
+        width: 100%;
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin: 0 auto;
+      }
+      .report-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+      .report-section-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: #1f2937;
+      }
+      .report-meta {
+        font-size: 0.9rem;
+        color: #6b7280;
+      }
+      .report-content {
+        background: white;
+        border-radius: 8px;
+        padding: 2rem 3rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        line-height: 1.8;
+        font-size: 1.08rem;
+        min-height: 300px;
+      }
+      .report-content p {
+        margin-bottom: 1rem;
+        line-height: 1.8;
+      }
+      .report-content ul {
+        margin-left: 1.25rem;
+        padding-left: 1rem;
+      }
+      .report-content h3 {
+        margin-top: 1.5rem;
+      }
+      .report-content .page-container {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .report-content .page-header,
+      .report-content .content-card {
+        border-radius: 0 !important;
+      }
+      .report-content img {
+        max-width: 100%;
+        height: auto;
+      }
+      .loading {
+        text-align: center;
+        padding: 4rem;
+        color: #6b7280;
+      }
+      .error {
+        text-align: center;
+        padding: 4rem;
+        color: #dc2626;
+        background: #fee2e2;
+        border-radius: 8px;
+      }
+
+      /* Drybulk 그래프 레이아웃 (charts.html과 동일 구조) */
+      .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        width: 100%;
+      }
+      .chart-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        min-height: 420px;
+      }
+      .chart-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 1rem;
+      }
+      .chart-container {
+        height: 350px;
+        min-height: 350px;
+        position: relative;
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body data-report-category="drybulk_quarter">
+    <div class="report-container">
+      <div class="report-header">
+        <h1>POSCO FLOW Market Intelligence - Drewry 분기 보고서</h1>
+        <nav style="margin-top: 0.5rem;">
+          <a href="/" style="color: #9ca3af; text-decoration: none; font-size: 0.9rem;">← 메인 화면으로</a>
+        </nav>
+      </div>
+
+      <div class="report-body">
+        <div class="date-sidebar">
+          <div class="date-tabs">
+            <button class="date-tab active" data-date="2025-4Q">2025-4Q</button>
+            <button class="date-tab" data-date="2025-3Q">2025-3Q</button>
+            <button class="date-tab" data-date="2025-2Q">2025-2Q</button>
+            <button class="date-tab" data-date="2025-1Q">2025-1Q</button>
+          </div>
+        </div>
+
+        <div class="content-area">
+          <div class="charts-grid">
+            <div class="chart-section">
+              <h2 class="chart-title">Dry Bulk Trade</h2>
+              <div class="chart-container">
+                <div id="drybulkTradeLoading" class="loading">데이터를 불러오는 중...</div>
+                <canvas id="drybulkTradeChart" style="display: none;"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-section">
+              <h2 class="chart-title">Fleet Development</h2>
+              <div class="chart-container">
+                <div id="fleetDevelopmentLoading" class="loading">데이터를 불러오는 중...</div>
+                <canvas id="fleetDevelopmentChart" style="display: none;"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-section">
+              <h2 class="chart-title">Indices (BCI, BHSI, BPI, BSI)</h2>
+              <div class="chart-container">
+                <div id="indicesLoading" class="loading">데이터를 불러오는 중...</div>
+                <canvas id="indicesChart" style="display: none;"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="content-wrapper">
+            <div class="report-section">
+              <div class="report-section-header">
+                <h2>Drewry 분기 보고서</h2>
+                <div id="reportMeta" class="report-meta">2025-3Q 보고서</div>
+              </div>
+              <div id="reportContent" class="report-content">
+                <div class="loading">보고서를 불러오는 중...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="charts.js"></script>
+    <script src="report-page.js"></script>
+  </body>
+</html>
+
+
+
