@@ -71,6 +71,14 @@ class DrybulkMonthlyReport(ReportDocumentBase):
     __tablename__ = "reports_drybulk_monthly"
 
 
+class DrybulkQuarterReport(ReportDocumentBase):
+    __tablename__ = "reports_drybulk_quarter"
+
+
+class ContainerQuarterReport(ReportDocumentBase):
+    __tablename__ = "reports_container_quarter"
+
+
 class PDFContent(Base):
     """Metadata for uploaded PDF files."""
 

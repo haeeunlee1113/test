@@ -49,6 +49,8 @@ def init_db() -> None:
         BreakingNewsReport,
         DeepResearchReport,
         DrybulkMonthlyReport,
+        DrybulkQuarterReport,
+        ContainerQuarterReport,
     )
 
     engine = init_engine(Config.DATABASE_URL)

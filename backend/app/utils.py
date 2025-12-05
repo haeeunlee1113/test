@@ -20,6 +20,23 @@ def get_current_month_year_suffix() -> str:
     now = datetime.now()
     return f"_{now.month:02d}_{now.strftime('%y')}"
 
+def get_previous_month_year_suffix() -> str:
+    """현재 월에서 1을 뺀 월의 '_월_년' 형식 접미사 반환 (예: 현재 12월이면 '_11_25')"""
+    now = datetime.now()
+    # 현재 월에서 1을 뺌
+    prev_month = now.month - 1
+    prev_year = now.year
+    
+    # 1월이면 전년도 12월로
+    if prev_month == 0:
+        prev_month = 12
+        prev_year = prev_year - 1
+    
+    # 년도 2자리 형식
+    year_2digit = prev_year % 100
+    
+    return f"_{prev_month:02d}_{year_2digit:02d}"
+
 # ====== 파일별 타깃 코드 설정 (suffix 제외한 기본 파일명 기준) ======
 FILE_CODE_MAP = {
     "SIN_Timeseries_BCI 5TC": ["534544"],
@@ -534,14 +551,14 @@ def group_datasets_by_category() -> dict:
             "scfi_weekly": []
         }
         
-        # 현재 월_년 접미사 생성
-        current_suffix = get_current_month_year_suffix().lower()
+        # 현재 월 - 1의 접미사 사용
+        target_suffix = get_previous_month_year_suffix().lower()
         
         for dataset in datasets:
             filename = dataset.original_filename.lower()
             
-            # 현재 월_년 접미사가 포함된 파일만 처리
-            if current_suffix not in filename:
+            # 현재 월 - 1 접미사가 포함된 파일만 처리
+            if target_suffix not in filename:
                 continue
             
             if "dry bulk trade" in filename:

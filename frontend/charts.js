@@ -333,6 +333,8 @@ function initGroupChart(canvasId, datasets, title) {
 // ==================== 날짜 탭 전환 기능 (과거 데이터) ====================
 function setupDateTabs() {
   const dateTabButtons = document.querySelectorAll('.date-tab');
+  const bodyCategory = document.body ? document.body.getAttribute('data-report-category') || '' : '';
+  const isMainDrybulkPage = !bodyCategory || bodyCategory === 'drybulk_clarksons_drewry';
 
   dateTabButtons.forEach((button) => {
     button.addEventListener('click', () => {
@@ -343,17 +345,16 @@ function setupDateTabs() {
       // 선택된 날짜 탭 활성화
       button.classList.add('active');
 
-      // TODO: 선택된 날짜에 해당하는 데이터 로드
-      // 현재는 레이아웃만 구현
       console.log('선택된 날짜:', selectedDate);
-      
-      // Dry Bulk 페이지인 경우에만 그래프 데이터 다시 로드
+
+      // Dry Bulk 그래프는 모든 Drybulk 페이지에서 동일하게 다시 로드
       if (document.getElementById('drybulkTradeChart')) {
         loadChartData();
-        loadReportForDate(selectedDate);
+        // 메인 Drybulk 페이지에서만 charts.js가 보고서를 로드
+        if (isMainDrybulkPage) {
+          loadReportForDate(selectedDate);
+        }
       }
-      
-      // 추후 구현: loadChartDataForDate(selectedDate);
     });
   });
 }
@@ -384,7 +385,16 @@ async function loadReportForDate(dateLabel) {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error('보고서를 불러오지 못했습니다.');
+      let errorMessage = '보고서를 불러오지 못했습니다.';
+      try {
+        const errorData = await response.json();
+        if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (e) {
+        // JSON 파싱 실패 시 기본 메시지 사용
+      }
+      throw new Error(errorMessage);
     }
     const data = await response.json();
     const report = data.report;
@@ -398,16 +408,27 @@ async function loadReportForDate(dateLabel) {
     reportContainer.innerHTML = report.html_content || '<p>보고서 내용이 비어 있습니다.</p>';
   } catch (error) {
     console.error('보고서 로드 오류:', error);
-    reportContainer.innerHTML = '<div class="error">보고서를 불러오는 중 오류가 발생했습니다.</div>';
+    // "보고서가 존재하지 않습니다." 메시지는 그대로 표시
+    if (error.message === "보고서가 존재하지 않습니다.") {
+      reportContainer.innerHTML = `<div class="error">${error.message}</div>`;
+    } else {
+      reportContainer.innerHTML = `<div class="error">보고서가 존재하지 않습니다.: ${error.message}</div>`;
+    }
   }
 }
 
 // 페이지 로드 시 그래프 데이터 로드 및 날짜 탭 설정
 document.addEventListener('DOMContentLoaded', () => {
+  const bodyCategory = document.body ? document.body.getAttribute('data-report-category') || '' : '';
+  const isMainDrybulkPage = !bodyCategory || bodyCategory === 'drybulk_clarksons_drewry';
+
   setupDateTabs();
   // Dry Bulk 페이지인 경우에만 그래프 데이터 로드
   if (document.getElementById('drybulkTradeChart')) {
     loadChartData();
-    loadReportForDate(getActiveDateLabel());
+    // 메인 Drybulk 페이지에서만 charts.js가 보고서를 로드
+    if (isMainDrybulkPage) {
+      loadReportForDate(getActiveDateLabel());
+    }
   }
 });

@@ -115,7 +115,7 @@
 
             <!-- Drybulk Monthly -->
             <div class="docx-upload-item">
-              <h4>Drybulk Monthly</h4>
+              <h4>Drybulk half year</h4>
               <form class="docx-upload-form" data-category="drybulk_monthly">
                 <label for="drybulk-monthly-file" class="file-label docx-file-label">
                   <span class="docx-file-name">HTML / JSON 파일 선택</span>
@@ -123,6 +123,27 @@
                 <input
                   type="file"
                   id="drybulk-monthly-file"
+                  class="docx-file-input"
+                  accept=".html,.htm,.json"
+                  style="display: none;"
+                />
+                <button type="submit" class="upload-btn" style="width: 100%; margin-top: 0.5rem;">
+                  업로드
+                </button>
+                <div class="docx-upload-feedback upload-feedback"></div>
+              </form>
+            </div>
+
+            <!-- Drybulk Quarter -->
+            <div class="docx-upload-item">
+              <h4>Drybulk Quarter</h4>
+              <form class="docx-upload-form" data-category="drybulk_quarter">
+                <label for="drybulk-quarter-file" class="file-label docx-file-label">
+                  <span class="docx-file-name">HTML / JSON 파일 선택</span>
+                </label>
+                <input
+                  type="file"
+                  id="drybulk-quarter-file"
                   class="docx-file-input"
                   accept=".html,.htm,.json"
                   style="display: none;"
@@ -144,6 +165,27 @@
                 <input
                   type="file"
                   id="container-clarksons-file"
+                  class="docx-file-input"
+                  accept=".html,.htm,.json"
+                  style="display: none;"
+                />
+                <button type="submit" class="upload-btn" style="width: 100%; margin-top: 0.5rem;">
+                  업로드
+                </button>
+                <div class="docx-upload-feedback upload-feedback"></div>
+              </form>
+            </div>
+
+            <!-- Container Quarter -->
+            <div class="docx-upload-item">
+              <h4>Container Quarter</h4>
+              <form class="docx-upload-form" data-category="container_quarter">
+                <label for="container-quarter-file" class="file-label docx-file-label">
+                  <span class="docx-file-name">HTML / JSON 파일 선택</span>
+                </label>
+                <input
+                  type="file"
+                  id="container-quarter-file"
                   class="docx-file-input"
                   accept=".html,.htm,.json"
                   style="display: none;"
@@ -218,9 +260,9 @@
               </form>
             </div>
 
-            <!-- 심층 리포트 -->
+            <!-- 딥리서치 -->
             <div class="docx-upload-item">
-              <h4>심층 리포트</h4>
+              <h4>딥리서치</h4>
               <form class="docx-upload-form" data-category="deep_research">
                 <label for="deep-research-file" class="file-label docx-file-label">
                   <span class="docx-file-name">HTML / JSON 파일 선택</span>

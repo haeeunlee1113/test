@@ -1,4 +1,4 @@
-const getApiBaseUrl = () => {
+function getReportApiBaseUrl() {
   const urlParams = new URLSearchParams(window.location.search);
   const apiUrl = urlParams.get('api');
   if (apiUrl) {
@@ -8,9 +8,9 @@ const getApiBaseUrl = () => {
     return 'http://localhost:5000/api';
   }
   return '/api';
-};
+}
 
-const API_BASE_URL = getApiBaseUrl();
+const REPORT_API_BASE_URL = getReportApiBaseUrl();
 
 // REPORT_CATEGORY를 함수로 변경하여 DOMContentLoaded 이후에 읽도록 함
 function getReportCategory() {
@@ -60,7 +60,7 @@ async function loadReport(dateLabel) {
   if (dateLabel) {
     params.set('month', dateLabel);
   }
-  let url = `${API_BASE_URL}/reports/${REPORT_CATEGORY}`;
+  let url = `${REPORT_API_BASE_URL}/reports/${REPORT_CATEGORY}`;
   if (params.toString()) {
     url += `?${params.toString()}`;
   }
@@ -71,9 +71,18 @@ async function loadReport(dateLabel) {
     console.log('Response status:', response.status, response.statusText);
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Response error:', errorText);
-      throw new Error(`보고서를 불러오지 못했습니다. (${response.status})`);
+      let errorMessage = `보고서가 존재하지 않습니다. (${response.status})`;
+      try {
+        const errorData = await response.json();
+        if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (e) {
+        // JSON 파싱 실패 시 기본 메시지 사용
+        const errorText = await response.text();
+        console.error('Response error:', errorText);
+      }
+      throw new Error(errorMessage);
     }
     
     const data = await response.json();
@@ -86,7 +95,21 @@ async function loadReport(dateLabel) {
     
     if (metaEl) {
       const label = report.requested_month || dateLabel || '';
-      const dateText = label ? `${label.replace('-', '/')} 보고서` : '최신 보고서';
+      let dateText = '최신 보고서';
+      if (label) {
+        // 분기 형식 처리 (2025-1Q -> 2025-1Q)
+        if (label.includes('Q')) {
+          dateText = `${label} 보고서`;
+        } 
+        // 반기 형식 처리 (2025-하, 2025-상)
+        else if (label.includes('하') || label.includes('상')) {
+          dateText = `${label} 보고서`;
+        } 
+        // 월 형식 처리
+        else {
+          dateText = `${label.replace('-', '/')} 보고서`;
+        }
+      }
       metaEl.textContent = `${dateText} · ${report.original_filename}`;
     }
     
@@ -94,7 +117,12 @@ async function loadReport(dateLabel) {
     console.log('Report loaded successfully');
   } catch (error) {
     console.error('Error loading report:', error);
-    contentEl.innerHTML = `<div class="error">보고서를 불러오는 중 오류가 발생했습니다: ${error.message}</div>`;
+    // "보고서가 존재하지 않습니다." 메시지는 그대로 표시
+    if (error.message === "보고서가 존재하지 않습니다.") {
+      contentEl.innerHTML = `<div class="error">${error.message}</div>`;
+    } else {
+      contentEl.innerHTML = `<div class="error">${error.message}</div>`;
+    }
   }
 }
 

@@ -8,6 +8,7 @@ from datetime import datetime
 
 from flask import Blueprint, jsonify, request, send_file
 from werkzeug.exceptions import RequestEntityTooLarge
+from sqlalchemy import or_
 
 from .config import Config
 from .database import get_session
@@ -22,6 +23,8 @@ from .models import (
     BreakingNewsReport,
     DeepResearchReport,
     DrybulkMonthlyReport,
+    DrybulkQuarterReport,
+    ContainerQuarterReport,
 )
 from .utils import (
     is_allowed_excel_file,
@@ -42,7 +45,9 @@ REPORT_TABLES = {
     "drybulk_clarksons_drewry": DrybulkClarksonsReport,
     "drybulk_news_media": DrybulkNewsReport,
     "drybulk_monthly": DrybulkMonthlyReport,
+    "drybulk_quarter": DrybulkQuarterReport,
     "container_clarksons": ContainerClarksonsReport,
+     "container_quarter": ContainerQuarterReport,
     "container_news_media": ContainerNewsReport,
     "weekly_issues": WeeklyIssuesReport,
     "breaking_news": BreakingNewsReport,
@@ -53,7 +58,9 @@ REPORT_CATEGORY_LABELS = {
     "drybulk_clarksons_drewry": "Drybulk Clarksons/Drewry",
     "drybulk_news_media": "Drybulk News Media",
     "drybulk_monthly": "Drybulk Monthly",
+    "drybulk_quarter": "Drybulk Quarter",
     "container_clarksons": "Container Clarksons",
+    "container_quarter": "Container Quarter",
     "container_news_media": "Container News Media",
     "weekly_issues": "Weekly Issues",
     "breaking_news": "Breaking News",
@@ -225,14 +232,114 @@ def upload_text():
 
 @api_bp.route("/reports/<category>", methods=["GET"])
 def get_report_by_category(category: str):
-    """Retrieve latest report document by category (optional month filter)."""
+    """Retrieve latest report document by category (optional month/quarter filter)."""
     if not category or category not in REPORT_TABLES:
         return jsonify({"error": "지원하지 않는 카테고리입니다."}), 400
 
     month_param = request.args.get("month")
     suffix = None
     requested_month = None
+    
     if month_param:
+        # 분기 형식 처리 (예: 2025-1Q, 2025-2Q, 2025-3Q)
+        if month_param.endswith('Q') and '-' in month_param:
+            try:
+                year, quarter = month_param.split('-')
+                quarter_num = int(quarter.replace('Q', ''))
+                if quarter_num in [1, 2, 3, 4]:
+                    # 분기별 월 매핑: 1Q(1-3월), 2Q(4-6월), 3Q(7-9월), 4Q(10-12월)
+                    month_ranges = {
+                        1: ['01', '02', '03'],
+                        2: ['04', '05', '06'],
+                        3: ['07', '08', '09'],
+                        4: ['10', '11', '12']
+                    }
+                    months = month_ranges[quarter_num]
+                    year_short = year[-2:] if len(year) == 4 else year
+                    
+                    # 파일명에 직접 분기 코드가 포함된 파일만 검색
+                    table_cls = REPORT_TABLES[category]
+                    session = get_session()
+                    try:
+                        # 파일명에 직접 분기 코드가 포함된 경우만 검색 (예: 2025-4Q, 2025-3Q)
+                        quarter_pattern = f"%{month_param}%"
+                        query = session.query(table_cls).filter(table_cls.original_filename.ilike(quarter_pattern))
+                        report = query.order_by(table_cls.uploaded_at.desc()).first()
+                        
+                        if not report:
+                            # 해당 분기 코드를 가진 파일이 없으면 에러 반환
+                            return jsonify({"error": "보고서가 존재하지 않습니다."}), 404
+                        
+                        requested_month = month_param
+                        
+                        return jsonify(
+                            {
+                                "report": {
+                                    "category": category,
+                                    "category_label": REPORT_CATEGORY_LABELS.get(category, category),
+                                    "original_filename": report.original_filename,
+                                    "uploaded_at": report.uploaded_at.isoformat(),
+                                    "requested_month": requested_month,
+                                    "html_content": report.html_content,
+                                }
+                            }
+                        )
+                    finally:
+                        session.close()
+            except (ValueError, KeyError):
+                pass
+        
+        # 반기 형식 처리 (예: 2025-하, 2025-상)
+        if month_param.endswith(('하', '상')) and '-' in month_param:
+            try:
+                year, half = month_param.split('-')
+                year_short = year[-2:] if len(year) == 4 else year
+                
+                # 반기별 월 매핑: 상반기(1-6월), 하반기(7-12월)
+                if half == '상':
+                    months = ['01', '02', '03', '04', '05', '06']
+                elif half == '하':
+                    months = ['07', '08', '09', '10', '11', '12']
+                else:
+                    raise ValueError("Invalid half")
+                
+                # 해당 반기의 모든 월 패턴으로 검색
+                table_cls = REPORT_TABLES[category]
+                session = get_session()
+                try:
+                    patterns = [f"%{year_short}_{month}%" for month in months]
+                    conditions = [table_cls.original_filename.ilike(pattern) for pattern in patterns]
+                    query = session.query(table_cls).filter(or_(*conditions))
+                    report = query.order_by(table_cls.uploaded_at.desc()).first()
+                    
+                    if not report:
+                        # Fallback to most recent report
+                        report = session.query(table_cls).order_by(table_cls.uploaded_at.desc()).first()
+                        requested_month = None
+                    else:
+                        requested_month = month_param
+                    
+                    if not report:
+                        return jsonify({"error": "해당 조건에 맞는 보고서를 찾을 수 없습니다."}), 404
+                    
+                    return jsonify(
+                        {
+                            "report": {
+                                "category": category,
+                                "category_label": REPORT_CATEGORY_LABELS.get(category, category),
+                                "original_filename": report.original_filename,
+                                "uploaded_at": report.uploaded_at.isoformat(),
+                                "requested_month": requested_month,
+                                "html_content": report.html_content,
+                            }
+                        }
+                    )
+                finally:
+                    session.close()
+            except (ValueError, KeyError):
+                pass
+        
+        # 기존 월 형식 처리
         normalized = month_param.replace("/", "-")
         for fmt in ("%Y-%m", "%y-%m"):
             try:
@@ -248,19 +355,23 @@ def get_report_by_category(category: str):
     session = get_session()
     try:
         query = session.query(table_cls)
-        if suffix:
+        if suffix and requested_month:
+            # 파일명에 직접 날짜 형식이 포함된 파일 검색 (예: 2025-11)
+            date_pattern = f"%{requested_month}%"
+            query = query.filter(table_cls.original_filename.ilike(date_pattern))
+        elif suffix:
+            # 기존 패턴도 지원 (예: 25_11)
             like_pattern = f"%{suffix}%"
             query = query.filter(table_cls.original_filename.ilike(like_pattern))
 
         report = query.order_by(table_cls.uploaded_at.desc()).first()
 
-        if not report and suffix:
-            # Fallback to most recent report even if suffix filter failed
-            report = session.query(table_cls).order_by(table_cls.uploaded_at.desc()).first()
-            requested_month = None
+        if not report and (suffix or requested_month):
+            # 해당 날짜를 가진 파일이 없으면 에러 반환
+            return jsonify({"error": "보고서가 존재하지 않습니다."}), 404
 
         if not report:
-            return jsonify({"error": "해당 조건에 맞는 보고서를 찾을 수 없습니다."}), 404
+            return jsonify({"error": "보고서가 존재하지 않습니다."}), 404
 
         return jsonify(
             {
@@ -460,20 +571,20 @@ def download_pdf(pdf_id):
 
 @api_bp.route("/charts/data", methods=["GET"])
 def get_chart_data():
-    """그래프 데이터를 반환 (2021년 이후 필터링, 그룹별). 오늘 날짜 기준 _월_년 형식 파일만 사용."""
-    from .utils import get_current_month_year_suffix
+    """그래프 데이터를 반환 (2021년 이후 필터링, 그룹별). 현재 월 - 1의 _월_년 형식 파일만 사용."""
+    from .utils import get_previous_month_year_suffix
     
     session = get_session()
     try:
-        # 오늘 날짜 기준 월_년 접미사
-        current_suffix = get_current_month_year_suffix().lower()
+        # 현재 월 - 1의 접미사 사용
+        target_suffix = get_previous_month_year_suffix().lower()
         
         # 카테고리별로 데이터셋 그룹화
         groups = group_datasets_by_category()
         
         # 디버깅: 각 그룹의 파일명 출력
         debug_info = {
-            "current_suffix": current_suffix,
+            "target_suffix": target_suffix,
             "drybulk_trade_files": [],
             "fleet_development_files": [],
             "indices_files": []
@@ -503,7 +614,7 @@ def get_chart_data():
                         })
         
         print("\n=== 그래프 데이터 디버깅 정보 ===")
-        print(f"현재 접미사: {current_suffix}")
+        print(f"대상 접미사 (현재 월 - 1): {target_suffix}")
         print(f"\nDry Bulk Trade 파일들:")
         for f in debug_info["drybulk_trade_files"]:
             print(f"  - {f['filename']} (ID: {f['id']}, 업로드: {f['uploaded_at']})")
@@ -523,7 +634,6 @@ def get_chart_data():
         
         # 각 그룹별로 데이터 수집 (중복 파일명 제거 - 가장 최근 것만 사용)
         # suffix를 제외한 기본 파일명으로 비교하여 같은 파일의 다른 버전 제거
-        from .utils import get_current_month_year_suffix
         import re
         
         def get_base_filename(filename: str) -> str:
@@ -549,8 +659,8 @@ def get_chart_data():
                 if dataset:
                     datasets_list.append(dataset)
             
-            # 업로드 시간 순으로 정렬 (오래된 것부터 최신 것까지)
-            datasets_list.sort(key=lambda d: d.uploaded_at)
+            # 업로드 시간 순으로 정렬 (최신 것부터)
+            datasets_list.sort(key=lambda d: d.uploaded_at, reverse=True)
             
             for dataset in datasets_list:
                 file_path = Config.EXCEL_FOLDER / dataset.stored_filename
@@ -559,8 +669,8 @@ def get_chart_data():
                 
                 filename = dataset.original_filename
                 
-                # 오늘 날짜 기준 _월_년 형식이 포함된 파일만 처리
-                if current_suffix not in filename.lower():
+                # 현재 월 - 1 접미사가 포함된 파일만 처리
+                if target_suffix not in filename.lower():
                     continue
                 
                 base_filename = get_base_filename(filename)
@@ -619,16 +729,16 @@ def get_chart_data():
 @api_bp.route("/charts/data/bci", methods=["GET"])
 def get_bci_chart_data():
     """BCI Index 전용 엔드포인트 - 빠른 응답을 위해 BCI 5TC 데이터만 반환."""
-    from .utils import get_current_month_year_suffix
+    from .utils import get_previous_month_year_suffix
     
     session = get_session()
     try:
-        # 오늘 날짜 기준 월_년 접미사
-        current_suffix = get_current_month_year_suffix().lower()
+        # 현재 월 - 1의 접미사 사용
+        target_suffix = get_previous_month_year_suffix().lower()
         
         # BCI 5TC 파일 찾기
         datasets = session.query(Dataset).filter(
-            Dataset.original_filename.ilike(f'%BCI 5TC%{current_suffix}%')
+            Dataset.original_filename.ilike(f'%BCI 5TC%{target_suffix}%')
         ).order_by(Dataset.uploaded_at.desc()).all()
         
         if not datasets:
@@ -687,20 +797,20 @@ def get_bci_chart_data():
 
 @api_bp.route("/charts/data/container", methods=["GET"])
 def get_container_chart_data():
-    """Container 그래프 데이터를 반환 (2021년 이후 필터링, 그룹별). 오늘 날짜 기준 _월_년 형식 파일만 사용."""
-    from .utils import get_current_month_year_suffix
+    """Container 그래프 데이터를 반환 (2021년 이후 필터링, 그룹별). 현재 월 - 1의 _월_년 형식 파일만 사용."""
+    from .utils import get_previous_month_year_suffix
     
     session = get_session()
     try:
-        # 오늘 날짜 기준 월_년 접미사
-        current_suffix = get_current_month_year_suffix().lower()
+        # 현재 월 - 1의 접미사 사용
+        target_suffix = get_previous_month_year_suffix().lower()
         
         # 카테고리별로 데이터셋 그룹화
         groups = group_datasets_by_category()
         
         # 디버깅: 각 그룹의 파일명 출력
         print("\n=== Container 그래프 데이터 디버깅 정보 ===")
-        print(f"현재 접미사: {current_suffix}")
+        print(f"대상 접미사 (현재 월 - 1): {target_suffix}")
         print(f"\nContainer Trade & Fleet 파일들:")
         for dataset_id in groups.get("container_trade_fleet", []):
             dataset = session.query(Dataset).filter_by(id=dataset_id).first()
@@ -732,14 +842,14 @@ def get_container_chart_data():
         for group_name in ["container_trade_fleet", "scfi_weekly"]:
             dataset_ids = groups.get(group_name, [])
             
-            # 각 그룹의 데이터셋을 업로드 시간 순으로 정렬
+            # 각 그룹의 데이터셋을 업로드 시간 순으로 정렬 (최신 것부터)
             datasets_list = []
             for dataset_id in dataset_ids:
                 dataset = session.query(Dataset).filter_by(id=dataset_id).first()
                 if dataset:
                     datasets_list.append(dataset)
             
-            datasets_list.sort(key=lambda d: d.uploaded_at)
+            datasets_list.sort(key=lambda d: d.uploaded_at, reverse=True)
             
             for dataset in datasets_list:
                 file_path = Config.EXCEL_FOLDER / dataset.stored_filename
@@ -748,8 +858,8 @@ def get_container_chart_data():
                 
                 filename = dataset.original_filename
                 
-                # 오늘 날짜 기준 _월_년 형식이 포함된 파일만 처리
-                if current_suffix not in filename.lower():
+                # 현재 월 - 1 접미사가 포함된 파일만 처리
+                if target_suffix not in filename.lower():
                     continue
                 
                 base_filename = get_base_filename(filename)

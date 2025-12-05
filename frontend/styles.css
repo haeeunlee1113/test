@@ -490,7 +490,7 @@ body {
 }
 
 .category-title {
-  font-size: 1.375rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: #1f2937;
   margin-bottom: 1.5rem;
@@ -531,7 +531,7 @@ body {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 1rem 1.5rem;
-  font-size: 1rem;
+  font-size: 1.2rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -626,7 +626,7 @@ body {
 }
 
 .bottom-box-title {
-  font-size: 1.3rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: #111827;
   margin-bottom: 1.25rem;

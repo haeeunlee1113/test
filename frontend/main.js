@@ -39,7 +39,7 @@ function extractFirstRowWithContent(htmlContent) {
         .map((t, idx) => {
           const num = `${idx + 1}.`;
           // 번호는 float로 처리하고, 제목은 padding-left로 들여쓰기 (번호는 볼드체)
-          return `<div style="margin-bottom: 0.5rem; overflow: hidden;"><span style="float: left; width: 2em; text-align: right; margin-right: 0.5rem; font-weight: bold;">${num}</span><span style="display: block; padding-left: 2.5em; text-indent: 0;">${t}</span></div>`;
+          return `<div style="margin-bottom: 0.5rem; overflow: hidden; font-size: inherit; word-break: keep-all; overflow-wrap: break-word;"><span style="float: left; width: 2em; text-align: right; margin-right: 0.5rem; font-weight: bold;">${num}</span><span style="display: block; padding-left: 2.5em; text-indent: 0; word-break: keep-all; overflow-wrap: break-word;">${t}</span></div>`;
         })
         .join('');
     }
@@ -133,7 +133,7 @@ async function loadWeeklyIssuesPreview() {
       const firstRowWithContent = extractFirstRowWithContent(report.html_content);
       if (firstRowWithContent) {
         contentEl.innerHTML = `
-          <div style="margin: 0; padding: 1rem 1.25rem; background: #f9fafb; border-radius: 8px; color: #1f2937; font-size: 1.05rem; line-height: 1.9; letter-spacing: 0.01em;">
+          <div style="margin: 0; padding: 1rem 1.25rem; background: #f9fafb; border-radius: 8px; color: #1f2937; font-size: 1.3rem; line-height: 1.9; letter-spacing: 0.01em; word-break: keep-all; overflow-wrap: break-word;">
             ${firstRowWithContent}
             <div style="margin-top: 1.25rem; text-align: right;">
               <a href="/weekly" class="bottom-box-more-btn" style="display: inline-block; padding: 0.75rem 1.5rem; background: #e5e7eb; color: #111827; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.2s ease;">
@@ -213,7 +213,7 @@ function extractBreakingNewsContent(fullHtml) {
       const firstLi = el.querySelector("li");
       if (firstLi) {
         // 헤딩은 빼고, bullet 하나만 감싼 ul만 반환
-        return `<ul style="margin: 0; padding-left: 1.25em;">${firstLi.outerHTML}</ul>`;
+        return `<ul style="margin: 0; padding-left: 1.25em; word-break: keep-all; overflow-wrap: break-word;">${firstLi.outerHTML}</ul>`;
       }
       break;
     }
@@ -251,11 +251,11 @@ async function loadBreakingNewsPreview() {
       
       if (previewContent) {
         contentEl.innerHTML = `
-        <div style="margin: 0; padding: 1rem 1.25rem; background: #f9fafb; border-radius: 8px;">
-          <div style="font-weight: 700; color: #111827; font-size: 1.25rem; margin-bottom: 0.875rem; letter-spacing: -0.01em;">
+        <div style="margin: 0; padding: 1.2rem 1.25rem; background: #f9fafb; border-radius: 8px;">
+          <div style="font-weight: 700; color: #111827; font-size: 1.6rem; margin-bottom: 0.875rem; letter-spacing: -0.01em;">
             ${reportTitle}
           </div>
-          <div style="color: #1f2937; font-size: 1.05rem; line-height: 1.9; letter-spacing: 0.01em;">
+          <div style="color: #1f2937; font-size: 1.3rem; line-height: 1.9; letter-spacing: 0.01em; word-break: keep-all; overflow-wrap: break-word;">
             ${previewContent}
           </div>
           <div style="margin-top: 1.25rem; text-align: right;">
@@ -282,6 +282,214 @@ async function loadBreakingNewsPreview() {
     contentEl.innerHTML = '<p style="margin: 0; padding: 0.5rem; color: #9ca3af; font-size: 0.9rem;">로드 중 오류가 발생했습니다.</p>';
   }
 }
+
+// ==================== 심층 리포트(Deep Research) 미리보기 ====================
+function extractDeepReportPreview(htmlContent) {
+  if (!htmlContent) return "";
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlContent, "text/html");
+
+  // 메인 컨텐츠 영역 후보들
+  const mainSelectors = [
+    ".report-content",
+    ".content-area",
+    ".page-container",
+    "article",
+    "main"
+  ];
+
+  let container = null;
+  for (const sel of mainSelectors) {
+    const el = doc.querySelector(sel);
+    if (el) {
+      container = el;
+      break;
+    }
+  }
+  if (!container) {
+    container = doc.body;
+  }
+
+  // 문단, 리스트 등 텍스트 요소 중 앞쪽 몇 개만 사용
+  const blocks = container.querySelectorAll("p, li, div, section");
+  const parts = [];
+
+  for (const el of blocks) {
+    const text = (el.textContent || "").trim();
+    if (!text) continue;
+
+    parts.push(
+      `<p style="margin: 0 0 0.5rem 0;">${text}</p>`
+    );
+
+    if (parts.length >= 4) break; // 앞의 몇 줄만 사용
+  }
+
+  return parts.join("") || "";
+}
+
+function extractDeepReportPreview(htmlContent) {
+  if (!htmlContent) return "";
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlContent, "text/html");
+
+  let container =
+    doc.querySelector(".markdown-body") ||
+    doc.querySelector(".report-content, .content-area, .page-container, article, main") ||
+    doc.body;
+
+  const mainTitle =
+    (doc.querySelector(".page-title")?.textContent || "").trim() ||
+    (doc.querySelector("title")?.textContent || "").trim();
+
+  const headingNodes = container.querySelectorAll("h1, h2, h3");
+  const items = [];
+
+  for (const h of headingNodes) {
+    let text = (h.textContent || "").trim();
+    if (!text) continue;
+    if (text === mainTitle) continue;
+
+    // 🔹 앞쪽 넘버링 제거: "1. ", "2)", "3-1.", "4-2) " 같은 패턴
+    text = text.replace(/^\s*\d+(?:[\-\.]\d+)*[.)]?\s*/, "");
+    if (!text) continue;
+
+    // 🔹 레벨 정보 같이 저장 (h1 / h2 / h3)
+    const level = h.tagName.toLowerCase(); // "h1", "h2", "h3"
+    items.push({ level, text });
+
+    if (items.length >= 8) break;
+  }
+
+  if (items.length) {
+    const liHtml = items
+      .map(({ level, text }) => {
+        // 레벨별 스타일 분기
+        let fontSize = "2.5rem";
+        let fontWeight = "300";
+        let marginLeft = "0";
+
+        if (level === "h1") {
+          fontSize = "1.2rem";   // 제일 크고
+          fontWeight = "500";
+          marginLeft = "0";
+        } else if (level === "h2") {
+          fontSize = "0.5rem";
+          fontWeight = "500";
+          marginLeft = "0.25rem";
+        } else if (level === "h3") {
+          fontSize = "2.5rem";   // 제일 작게
+          fontWeight = "100";
+          marginLeft = "0.5rem";
+        }
+
+        return `
+          <li
+            style="
+              margin: 0 0 0.25rem 0;
+              margin-left: ${marginLeft};
+              word-break: keep-all;
+              overflow-wrap: break-word;
+            "
+          >
+            <span style="font-size: ${fontSize}; font-weight: ${fontWeight};">
+              ${text}
+            </span>
+          </li>
+        `;
+      })
+      .join("");
+
+    return `
+      <div style="word-break: keep-all; overflow-wrap: break-word;">
+        <p style="margin: 0 0 0.5rem 0; font-weight: 600;">주요 목차</p>
+        <ol style="margin: 0; padding-left: 1.25rem;">
+          ${liHtml}
+        </ol>
+      </div>
+    `;
+  }
+
+  // 이하 폴백 로직은 그대로…
+  const blocks = container.querySelectorAll("p, li, div, section");
+  const parts = [];
+
+  for (const el of blocks) {
+    const text = (el.textContent || "").trim();
+    if (!text) continue;
+
+    parts.push(
+      `<p style="margin: 0 0 0.5rem 0; word-break: keep-all; overflow-wrap: break-word;">${text}</p>`
+    );
+
+    if (parts.length >= 4) break;
+  }
+
+  return parts.join("") || "";
+}
+
+
+async function loadDeepResearchPreview() {
+  // 심층 리포트 박스 찾기
+  const bottomBoxes = Array.from(document.querySelectorAll(".bottom-box"));
+  const deepBox = bottomBoxes.find((box) => {
+    const title = box.querySelector(".bottom-box-title")?.textContent || "";
+    return title.includes("심층 리포트");
+  });
+
+  const contentEl = deepBox?.querySelector(".bottom-box-content");
+  if (!contentEl) return;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/reports/deep_research`);
+    if (!response.ok) {
+      throw new Error("보고서를 불러오지 못했습니다.");
+    }
+    const data = await response.json();
+    const report = data.report;
+
+    if (report && report.html_content) {
+      const previewHtml = extractDeepReportPreview(report.html_content);
+      const title =
+        extractReportTitle(report.html_content) || "심층 리포트";
+
+      if (previewHtml) {
+        contentEl.innerHTML = `
+          <div style="margin: 0; padding: 1rem 1.25rem; background: #f9fafb; border-radius: 8px;">
+            <div style="font-weight: 700; color: #111827; font-size: 1.6rem; margin-bottom: 0.75rem;">
+              ${title}
+            </div>
+            <div style="color: #1f2937; font-size: 1.rem; line-height: 1.8; word-break: keep-all; overflow-wrap: break-word;">
+              ${previewHtml}
+            </div>
+            <div style="margin-top: 1.25rem; text-align: right;">
+              <a href="/deep" class="bottom-box-more-btn" style="display: inline-block; padding: 0.75rem 1.5rem; background: #e5e7eb; color: #111827; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.2s ease;">
+                더보기 →
+              </a>
+            </div>
+          </div>
+        `;
+      } else {
+        contentEl.innerHTML = `
+          <div style="margin: 0; padding: 1rem 1.25rem;">
+            <div style="font-weight: 700; color: #111827; font-size: 1.1rem; margin-bottom: 0.5rem;">${title}</div>
+            <p style="margin: 0; color: #9ca3af; font-size: 0.98rem; line-height: 1.8; text-align: center;">미리보기로 표시할 내용이 없습니다.</p>
+          </div>
+        `;
+      }
+    } else {
+      contentEl.innerHTML =
+        '<p style="margin: 0; padding: 0.5rem; color: #9ca3af; font-size: 0.9rem;">보고서가 없습니다.</p>';
+    }
+  } catch (error) {
+    console.error("심층 리포트 로드 오류:", error);
+    contentEl.innerHTML =
+      '<p style="margin: 0; padding: 0.5rem; color: #9ca3af; font-size: 0.9rem;">로드 중 오류가 발생했습니다.</p>';
+  }
+}
+
 
 // BCI Index 그래프 로드 함수
 let bciChartInstance = null;
@@ -667,6 +875,8 @@ document.addEventListener('DOMContentLoaded', () => {
   loadWeeklyIssuesPreview();
   // 물류 속보 미리보기 로드
   loadBreakingNewsPreview();
+  // 심층 리포트 미리보기 로드
+  loadDeepResearchPreview();
   // 카테고리 박스 클릭 이벤트 제거 (버튼 클릭만 동작하도록)
   
   // 모든 카테고리 버튼에 이벤트 리스너 추가

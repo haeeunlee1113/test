@@ -12,7 +12,12 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
-const REPORT_CATEGORY = 'container_clarksons';
+// 페이지별로 다른 리포트 카테고리를 사용할 수 있도록 body의 data-report-category에서 읽어옴
+const REPORT_CATEGORY =
+  (typeof document !== 'undefined' &&
+    document.body &&
+    document.body.getAttribute('data-report-category')) ||
+  'container_clarksons';
 
 let chartInstances = {
   containerTradeFleet: null,
@@ -345,7 +350,7 @@ async function loadReportForDate(dateLabel) {
     reportContainer.innerHTML = report.html_content || '<p>보고서 내용이 비어 있습니다.</p>';
   } catch (error) {
     console.error('보고서 로드 오류:', error);
-    reportContainer.innerHTML = '<div class="error">보고서를 불러오는 중 오류가 발생했습니다.</div>';
+    reportContainer.innerHTML = '<div class="error">보고서가 존재하지 않습니다.</div>';
   }
 }
 
