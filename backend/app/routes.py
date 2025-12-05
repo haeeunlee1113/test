@@ -388,6 +388,62 @@ def get_report_by_category(category: str):
     finally:
         session.close()
 
+
+@api_bp.route("/reports/<category>/list", methods=["GET"])
+def list_reports_by_category(category: str):
+    """List all reports for a given category."""
+    if not category or category not in REPORT_TABLES:
+        return jsonify({"error": "지원하지 않는 카테고리입니다."}), 400
+
+    table_cls = REPORT_TABLES[category]
+    session = get_session()
+    try:
+        reports = session.query(table_cls).order_by(table_cls.uploaded_at.desc()).all()
+        return jsonify(
+            {
+                "reports": [
+                    {
+                        "id": report.id,
+                        "original_filename": report.original_filename,
+                        "uploaded_at": report.uploaded_at.isoformat(),
+                    }
+                    for report in reports
+                ]
+            }
+        )
+    finally:
+        session.close()
+
+
+@api_bp.route("/reports/<category>/<report_id>", methods=["GET"])
+def get_report_by_id(category: str, report_id: str):
+    """Get a specific report by category and ID."""
+    if not category or category not in REPORT_TABLES:
+        return jsonify({"error": "지원하지 않는 카테고리입니다."}), 400
+
+    table_cls = REPORT_TABLES[category]
+    session = get_session()
+    try:
+        report = session.query(table_cls).filter_by(id=report_id).first()
+        if not report:
+            return jsonify({"error": "보고서가 존재하지 않습니다."}), 404
+
+        return jsonify(
+            {
+                "report": {
+                    "id": report.id,
+                    "category": category,
+                    "category_label": REPORT_CATEGORY_LABELS.get(category, category),
+                    "original_filename": report.original_filename,
+                    "uploaded_at": report.uploaded_at.isoformat(),
+                    "html_content": report.html_content,
+                }
+            }
+        )
+    finally:
+        session.close()
+
+
 @api_bp.route("/upload/pdf", methods=["POST"])
 def upload_pdf():
     """Upload PDF file and extract metadata."""
