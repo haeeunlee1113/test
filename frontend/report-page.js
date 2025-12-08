@@ -107,7 +107,7 @@ async function loadReport(dateLabel) {
         } 
         // 월 형식 처리
         else {
-          dateText = `${label.replace('-', '/')} 보고서`;
+          dateText = `${label} 보고서`;
         }
       }
       metaEl.textContent = `${dateText} · ${report.original_filename}`;
