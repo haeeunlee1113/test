@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from datetime import datetime
 
@@ -339,6 +340,38 @@ def get_report_by_category(category: str):
             except (ValueError, KeyError):
                 pass
         
+        # 주차 형식 처리 (예: 2025-11-W4, 2025-12-W1)
+        week_match = re.match(r'^(\d{4})-(\d{1,2})-W(\d{1,2})$', month_param)
+        if week_match:
+            year, month, week = week_match.groups()
+            table_cls = REPORT_TABLES[category]
+            session = get_session()
+            try:
+                # 파일명에 주차 형식이 포함된 파일 검색 (예: 2025-11-W4.html)
+                week_pattern = f"%{year}-{month.zfill(2)}-W{week}%"
+                query = session.query(table_cls).filter(table_cls.original_filename.ilike(week_pattern))
+                report = query.order_by(table_cls.uploaded_at.desc()).first()
+                
+                if not report:
+                    return jsonify({"error": "보고서가 존재하지 않습니다."}), 404
+                
+                requested_month = month_param
+                
+                return jsonify(
+                    {
+                        "report": {
+                            "category": category,
+                            "category_label": REPORT_CATEGORY_LABELS.get(category, category),
+                            "original_filename": report.original_filename,
+                            "uploaded_at": report.uploaded_at.isoformat(),
+                            "requested_month": requested_month,
+                            "html_content": report.html_content,
+                        }
+                    }
+                )
+            finally:
+                session.close()
+        
         # 기존 월 형식 처리
         normalized = month_param.replace("/", "-")
         for fmt in ("%Y-%m", "%y-%m"):
@@ -385,6 +418,51 @@ def get_report_by_category(category: str):
                 }
             }
         )
+    finally:
+        session.close()
+
+
+@api_bp.route("/reports/weekly_issues/list", methods=["GET"])
+def list_weekly_issues():
+    """List all weekly issues reports with parsed week information."""
+    table_cls = WeeklyIssuesReport
+    session = get_session()
+    try:
+        reports = session.query(table_cls).order_by(table_cls.uploaded_at.desc()).all()
+        
+        # 파일명에서 주차 정보 파싱
+        week_reports = []
+        for report in reports:
+            filename = report.original_filename
+            # 파일명에서 주차 정보 추출 (예: 2025-11-W4.html -> 2025-11-W4)
+            week_match = re.search(r'(\d{4})-(\d{1,2})-W(\d{1,2})', filename, re.IGNORECASE)
+            if week_match:
+                year, month, week = week_match.groups()
+                year = int(year)
+                month = int(month)
+                week = int(week)
+                
+                week_reports.append({
+                    "id": report.id,
+                    "original_filename": report.original_filename,
+                    "uploaded_at": report.uploaded_at.isoformat(),
+                    "week_value": f"{year}-{month:02d}-W{week}",
+                    "year": year,
+                    "month": month,
+                    "week": week,
+                    "label": f"{year}년 {month}월 {week}주"
+                })
+        
+        # 년도 -> 월 -> 주 순으로 정렬
+        week_reports.sort(key=lambda x: (x["year"], x["month"], x["week"]), reverse=True)
+        
+        return jsonify({
+            "reports": week_reports,
+            "count": len(week_reports)
+        })
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": f"주차 목록을 가져오는 중 오류가 발생했습니다: {str(e)}"}), 500
     finally:
         session.close()
 

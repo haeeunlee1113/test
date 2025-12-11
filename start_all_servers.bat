@@ -1,27 +1,54 @@
 @echo off
+chcp 65001 >nul
 echo ====================================
-echo 서버 시작 중...
+echo Server Starting...
 echo ====================================
 echo.
 
 cd /d "%~dp0"
 
-echo 백엔드 서버 시작 중...
-start "Backend Server" cmd /k "cd test-cursor-build-code-from-scratch-93e2\backend && python run.py"
+REM Python path check
+where python >nul 2>&1
+if %errorlevel% neq 0 (
+    where python3 >nul 2>&1
+    if %errorlevel% neq 0 (
+        echo [ERROR] Python is not installed!
+        echo Please install Python or add it to PATH.
+        pause
+        exit /b 1
+    ) else (
+        set PYTHON_CMD=python3
+    )
+) else (
+    set PYTHON_CMD=python
+)
+
+echo Python command: %PYTHON_CMD%
+echo.
+
+echo Starting backend server...
+start "Backend Server" cmd /k "cd /d %~dp0backend && %PYTHON_CMD% run.py"
 
 timeout /t 2 /nobreak >nul
 
-echo 프론트엔드 서버 시작 중...
-start "Frontend Server" cmd /k "cd test-cursor-build-code-from-scratch-93e2\frontend && python server.py"
+echo Starting frontend server...
+start "Frontend Server" cmd /k "cd /d %~dp0frontend && %PYTHON_CMD% server.py"
+
+timeout /t 1 /nobreak >nul
 
 echo.
 echo ====================================
-echo 서버가 시작되었습니다!
+echo Servers started!
 echo ====================================
-echo 백엔드: http://localhost:5000
-echo 프론트엔드: http://localhost:3000
+echo Backend: http://localhost:5000
+echo Frontend: http://localhost:3000
 echo.
-echo 서버를 종료하려면 각 창을 닫으세요.
+echo If frontend does not start:
+echo 1. Check error message in "Frontend Server" window
+echo 2. Check if port 3000 is already in use
+echo 3. Run manually: cd frontend then python server.py
+echo.
+echo Close each window to stop servers.
 pause
 
 

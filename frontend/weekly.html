@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Weekly Issues - POSCO FLOW Market Intelligence</title>
+    <title>Weekly Issues Dashboard - POSCO FLOW Market Intelligence</title>
     <link rel="stylesheet" href="styles.css" />
     <style>
       body {
@@ -12,114 +12,194 @@
         margin: 0;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
           'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-        font-size: 16px; /* 기준 폰트 크기 */
+        font-size: 16px;
       }
-      .report-container {
+      .dashboard-container {
         display: flex;
         flex-direction: column;
         min-height: 100vh;
         background: white;
+        width: 100%;
       }
-      .report-header {
+      .dashboard-header {
         background: #111827;
         color: white;
         padding: 1.5rem 2rem;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
-      .report-header h1 {
+      .dashboard-header h1 {
         font-size: 1.5rem;
         font-weight: 700;
         margin: 0;
       }
-      .report-body {
+      .dashboard-header nav {
+        margin-top: 0.5rem;
+      }
+      .dashboard-header nav a {
+        color: #9ca3af;
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .dashboard-body {
         display: flex;
         flex: 1;
-        min-height: calc(100vh - 80px);
+        padding: 2rem;
+        gap: 1.5rem;
       }
-      .date-sidebar {
-        width: 200px;
-        background: #1f2937;
-        padding: 1.5rem 0;
-        border-right: 1px solid #374151;
+      .left-panel {
+        width: 280px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
       }
-      .date-tabs {
+      .current-week-section {
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1.5rem;
+      }
+      .current-week-section h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #374151;
+        margin: 0 0 1rem 0;
+      }
+      .current-week-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        background: white;
+        cursor: pointer;
+      }
+      .current-week-select:hover {
+        border-color: #3b82f6;
+      }
+      .archive-section {
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1.5rem;
+      }
+      .archive-section h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #374151;
+        margin: 0 0 1rem 0;
+      }
+      .archive-tree {
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
-        padding: 0 1rem;
       }
-      .date-tab {
-        padding: 0.75rem 1rem;
-        background: transparent;
-        border: 1px solid #4b5563;
-        border-radius: 6px;
-        color: #d1d5db;
-        font-size: 0.9rem;
-        font-weight: 500;
-        cursor: pointer;
-        text-align: left;
-        transition: all 0.2s;
-      }
-      .date-tab:hover {
-        background: #374151;
-        border-color: #60a5fa;
-        color: white;
-      }
-      .date-tab.active {
-        background: #3b82f6;
-        border-color: #3b82f6;
-        color: white;
-        font-weight: 600;
-      }
-      .content-area {
-        flex: 1;
-        padding: 2rem;
-        background: #f5f5f5;
-        overflow-y: auto;
-        overflow-x: hidden;
-      }
-      .content-wrapper {
-        width: 95%;
-        margin: 0 auto;
-      }
-      .report-section {
-        width: 100%;
-        max-width: 100%;
+      .archive-year {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
-        margin: 0 auto;
       }
-      .report-section-header {
+      .archive-year-header {
+        padding: 0.5rem 0.75rem;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 0.95rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        flex-wrap: wrap;
-        gap: 0.75rem;
       }
-      .report-section-header h2 {
-        margin: 0;
-        font-size: 1.25rem;
+      .archive-year-header:hover {
+        background: #e5e7eb;
+      }
+      .archive-year-header.expanded {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+      }
+      .archive-months {
+        margin-top: 0.5rem;
+        margin-left: 1rem;
+        display: none;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .archive-year.expanded .archive-months {
+        display: flex;
+      }
+      .archive-month {
+        display: flex;
+        flex-direction: column;
+      }
+      .archive-month-header {
+        padding: 0.5rem 0.75rem;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 0.9rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .archive-month-header:hover {
+        background: #f3f4f6;
+      }
+      .archive-month-header.expanded {
+        background: #60a5fa;
+        color: white;
+        border-color: #60a5fa;
+      }
+      .archive-weeks {
+        margin-top: 0.5rem;
+        margin-left: 1rem;
+        display: none;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      .archive-month.expanded .archive-weeks {
+        display: flex;
+      }
+      .archive-week-item {
+        padding: 0.5rem 0.75rem;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: #6b7280;
+        transition: all 0.2s;
+      }
+      .archive-week-item:hover {
+        background: #f3f4f6;
+        border-color: #3b82f6;
         color: #1f2937;
       }
-      .report-meta {
-        font-size: 0.9rem;
-        color: #6b7280;
+      .archive-week-item.active {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+        font-weight: 500;
       }
-
-      /* 🔹 본문 기본 폰트 크기 / 줄간격 설정 */
-      .report-content {
-        padding: 2rem 3rem;
-        min-height: 300px;
-        max-height: none;
+      .content-panel {
+        flex: 1;
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 2.5rem;
         overflow-y: auto;
-        overflow-x: hidden;
-        line-height: 1.8;
-        max-width: 100%;
-        margin: 0 auto;
-        font-size: 1.08rem; /* 여기 숫자 올리면 본문 전체가 커짐 */
+        min-height: 600px;
       }
-
+      .content-wrapper {
+        width: 100%;
+      }
+      .report-content {
+        padding: 1.5rem 2rem;
+        line-height: 1.8;
+        font-size: 1rem;
+      }
       .report-content p {
         margin-bottom: 1rem;
       }
@@ -127,37 +207,6 @@
         margin-left: 1.25rem;
         padding-left: 1rem;
       }
-      .report-content h3 {
-        margin-top: 1.5rem;
-      }
-
-      /* .report-content .page-container,
-      .report-content .content-card,
-      .report-content .page-header {
-        max-width: 100% !important;
-        width: 100% !important;
-        margin: 0 auto !important;
-        padding: 0 !important;
-      }*/
-      .report-content > * {
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-      }
-      .report-content img {
-        max-width: 100%;
-        height: auto;
-      }
-
-      /* 🔹 여기서 font-size: inherit !important 제거해서
-         내부 요소가 자기 크기 가질 수 있게 */
-      .report-content *,
-      .report-content *:before,
-      .report-content *:after {
-        /* font-size: inherit !important;  <= 제거 */
-        line-height: inherit !important;
-      }
-
-      /* 🔹 제목은 em 단위로: 본문 폰트 키우면 비율대로 같이 커짐 */
       .report-content h1,
       .report-content h2,
       .report-content h3 {
@@ -166,7 +215,7 @@
         margin-bottom: 0.75rem;
       }
       .report-content h1 {
-        font-size: 1.9em; /* 본문 대비 ~1.9배 */
+        font-size: 1.9em;
       }
       .report-content h2 {
         font-size: 1.6em;
@@ -174,7 +223,10 @@
       .report-content h3 {
         font-size: 1.35em;
       }
-
+      .report-content img {
+        max-width: 100%;
+        height: auto;
+      }
       .loading {
         text-align: center;
         padding: 4rem;
@@ -187,43 +239,93 @@
         background: #fee2e2;
         border-radius: 8px;
       }
+      .dropdown-icon {
+        font-size: 0.75rem;
+        transition: transform 0.2s;
+      }
+      .expanded .dropdown-icon {
+        transform: rotate(90deg);
+      }
+      /* 대시보드 안에 들어온 주간 이슈 HTML의 고정 폭 해제 */
+#reportContent .page-container {
+  max-width: none !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding-left: 0;
+  padding-right: 0;
+}
+/* 보고서 안의 일반 텍스트만 확실히 키우기 */
+/* === Weekly Issues HTML 스타일 덮어쓰기 === */
+
+/* 전체 기본 텍스트 조금 키우기 */
+#reportContent {
+  font-size: 17px !important;   /* 16 → 17 or 18로 조절해서 보기 */
+  line-height: 1.9;
+}
+
+/* 제목 / 메타정보 / 본문 등 개별 요소 사이즈 재정의 */
+#reportContent .page-title {
+  font-size: 1.7rem !important;
+}
+
+#reportContent .page-meta {
+  font-size: 1rem !important;
+}
+
+#reportContent .issue-title {
+  font-size: 1.4rem !important;
+}
+
+#reportContent .issue-topic {
+  font-size: 0.98rem !important;
+}
+
+#reportContent .issue-briefing {
+  font-size: 1.02rem !important;
+  line-height: 1.9 !important;
+}
+
+#reportContent .issue-card ul {
+  font-size: 1.1rem !important;
+}
+
     </style>
   </head>
-  <body data-report-category="weekly_issues">
-    <div class="report-container">
-      <div class="report-header">
-        <h1>POSCO FLOW Market Intelligence - Weekly Issues</h1>
-        <nav style="margin-top: 0.5rem;">
-          <a href="/" style="color: #9ca3af; text-decoration: none; font-size: 0.9rem;">← 메인 화면으로</a>
+  <body>
+    <div class="dashboard-container">
+      <div class="dashboard-header">
+        <h1>Weekly Issues Dashboard</h1>
+        <nav>
+          <a href="/">← 메인 화면으로</a>
         </nav>
       </div>
 
-      <div class="report-body">
-        <div class="date-sidebar">
-          <div class="date-tabs">
-            <button class="date-tab active" data-date="2025-11">2025/11</button>
-            <button class="date-tab" data-date="2025-10">2025/10</button>
-            <button class="date-tab" data-date="2025-09">2025/9</button>
-            <button class="date-tab" data-date="2025-08">2025/8</button>
-            <button class="date-tab" data-date="2025-07">2025/7</button>
+      <div class="dashboard-body">
+        <div class="left-panel">
+          <div class="current-week-section">
+            <h2>이번 주: <span id="currentWeekLabel">2025년 12월 1주</span> ▼</h2>
+            <select id="currentWeekSelect" class="current-week-select">
+              <option value="">로딩 중...</option>
+            </select>
+          </div>
+
+          <div class="archive-section">
+            <h2>아카이브</h2>
+            <div id="archiveTree" class="archive-tree">
+              <!-- 아카이브 트리가 여기에 동적으로 생성됩니다 -->
+            </div>
           </div>
         </div>
 
-        <div class="content-area">
+        <div class="content-panel">
           <div class="content-wrapper">
-            <div class="report-section">
-              <div class="report-section-header">
-                <h2>Weekly Issues Top 10</h2>
-                <div id="newsReportMeta" class="report-meta">2025/11 보고서</div>
-              </div>
-              <div id="newsReportContent" class="report-content">
-                <div class="loading">보고서를 불러오는 중...</div>
-              </div>
+            <div id="reportContent" class="report-content">
+              <div class="loading">보고서를 불러오는 중...</div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <script src="report-page.js"></script>
+    <script src="weekly-page.js"></script>
   </body>
 </html>
