@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>POSCO FLOW Market Intelligence</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="dashboard-header">
+      <h1>POSCO FLOW Market Intelligence</h1>
+    </header>
+
+    <div class="dashboard-container">
+      <main class="main-content">
+        <!-- 상단 섹션: Dry Bulk & Container -->
+        <section class="top-section">
+          <!-- Dry Bulk 박스 -->
+          <div class="category-box">
+            <h2 class="category-title">Dry Bulk</h2>
+            <div class="category-content">
+              <!-- 그래프 영역 -->
+              <div class="graph-container" style="height: 400px; position: relative;">
+                <canvas id="drybulkBCIChart"></canvas>
+                <div id="drybulkBCILoading" class="loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">데이터를 불러오는 중...</div>
+              </div>
+              <!-- 버튼들 -->
+              <div class="category-buttons">
+                <a href="/drybulk" class="category-btn category-btn-blue">
+                  Clarksons/Drewry<br>월간 보고서
+                </a>
+                <a href="/drybulk-half" class="category-btn category-btn-blue">
+                  Clarksons<br>반기 보고서
+                </a>
+                <a href="/drybulk-quarter" class="category-btn category-btn-blue">
+                  Drewry<br>분기 보고서
+                </a>
+                <a href="/drybulk-media" class="category-btn category-btn-small">
+                  물류 미디어<br>월간 전망
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Container 박스 -->
+          <div class="category-box">
+            <h2 class="category-title">Container</h2>
+            <div class="category-content">
+              <!-- 그래프 영역 -->
+              <div class="graph-container" style="height: 400px; position: relative;">
+                <canvas id="containerSCFIChart"></canvas>
+                <div id="containerSCFILoading" class="loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">데이터를 불러오는 중...</div>
+              </div>
+              <!-- 버튼들 -->
+              <div class="category-buttons">
+                <a href="/container" class="category-btn category-btn-blue">
+                  Clarksons<br>월간 보고서
+                </a>
+                <a href="/container-quarter" class="category-btn category-btn-blue">
+                  Clarksons<br>분기 보고서
+                </a>
+                <a href="/container-media" class="category-btn category-btn-small">
+                  물류 미디어<br>월간 전망
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 하단 섹션: 3개의 가로 박스 -->
+        <section class="bottom-section">
+          <!-- Weekly Issues Top 10 -->
+          <div class="bottom-box">
+            <h2 class="bottom-box-title">Weekly Issues Top 10</h2>
+            <div class="bottom-box-content">
+              <!-- 내용은 나중에 추가 -->
+            </div>
+          </div>
+
+          <!-- 물류 속보 -->
+          <div class="bottom-box">
+            <h2 class="bottom-box-title">물류 속보</h2>
+            <div class="bottom-box-content">
+              <!-- 내용은 나중에 추가 -->
+            </div>
+          </div>
+
+          <!-- 심층 리포트 -->
+          <div class="bottom-box">
+            <h2 class="bottom-box-title">심층 리포트</h2>
+            <div class="bottom-box-content">
+              <!-- 내용은 나중에 추가 -->
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dry Bulk 뉴스 미디어 분석 - POSCO FLOW Market Intelligence</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      body {
+        background: #f5f5f5;
+        padding: 0;
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        font-size: 16px; /* 기준 폰트 크기 */
+      }
+      .report-container {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        background: white;
+      }
+      .report-header {
+        background: #111827;
+        color: white;
+        padding: 1.5rem 2rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .report-header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+      }
+      .report-body {
+        display: flex;
+        flex: 1;
+        min-height: calc(100vh - 80px);
+      }
+      .date-sidebar {
+        width: 200px;
+        background: #1f2937;
+        padding: 1.5rem 0;
+        border-right: 1px solid #374151;
+      }
+      .date-tabs {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0 1rem;
+      }
+      .date-tab {
+        padding: 0.75rem 1rem;
+        background: transparent;
+        border: 1px solid #4b5563;
+        border-radius: 6px;
+        color: #d1d5db;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-align: left;
+        transition: all 0.2s;
+      }
+      .date-tab:hover {
+        background: #374151;
+        border-color: #60a5fa;
+        color: white;
+      }
+      .date-tab.active {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        color: white;
+        font-weight: 600;
+      }
+      .content-area {
+        flex: 1;
+        padding: 2rem;
+        background: #f5f5f5;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+      .content-wrapper {
+        width: 95%;
+        margin: 0 auto;
+      }
+      .report-section {
+        width: 100%;
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin: 0 auto;
+      }
+      .report-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+      .report-section-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: #1f2937;
+      }
+      .report-meta {
+        font-size: 0.9rem;
+        color: #6b7280;
+      }
+
+      /* 🔹 본문 기본 폰트 크기 / 줄간격 설정 */
+      .report-content {
+        padding: 2rem 3rem;
+        min-height: 300px;
+        max-height: none;
+        overflow-y: auto;
+        overflow-x: hidden;
+        line-height: 1.8;
+        max-width: 100%;
+        margin: 0 auto;
+        font-size: 1.08rem; /* 여기 숫자 올리면 본문 전체가 커짐 */
+      }
+
+      .report-content p {
+        margin-bottom: 1rem;
+      }
+      .report-content ul {
+        margin-left: 1.25rem;
+        padding-left: 1rem;
+      }
+      .report-content h3 {
+        margin-top: 1.5rem;
+      }
+
+     /* .report-content .page-container,
+      .report-content .content-card,
+      .report-content .page-header {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+      }
+      .report-content > * {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }*/
+      .report-content img {
+  max-width: 100%;
+  height: auto;
+}
+      /* 🔹 여기서 font-size: inherit !important 제거해서
+         내부 요소가 자기 크기 가질 수 있게 */
+      .report-content *,
+      .report-content *:before,
+      .report-content *:after {
+        /* font-size: inherit !important;  <= 제거 */
+        line-height: inherit !important;
+      }
+
+      /* 🔹 제목은 em 단위로: 본문 폰트 키우면 비율대로 같이 커짐 */
+      .report-content h1,
+      .report-content h2,
+      .report-content h3 {
+        line-height: 1.4;
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+      }
+      .report-content h1 {
+        font-size: 1.9em; /* 본문 대비 ~1.9배 */
+      }
+      .report-content h2 {
+        font-size: 1.6em;
+      }
+      .report-content h3 {
+        font-size: 1.35em;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 4rem;
+        color: #6b7280;
+      }
+      .error {
+        text-align: center;
+        padding: 4rem;
+        color: #dc2626;
+        background: #fee2e2;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body data-report-category="drybulk_news_media" data-report-width="70">
+    <div class="report-container">
+      <div class="report-header">
+        <h1>POSCO FLOW Market Intelligence - Dry Bulk 뉴스 미디어 분석</h1>
+        <nav style="margin-top: 0.5rem;">
+          <a href="/" style="color: #9ca3af; text-decoration: none; font-size: 0.9rem;">← 메인 화면으로</a>
+        </nav>
+      </div>
+
+      <div class="report-body">
+        <div class="date-sidebar">
+          <div class="date-tabs">
+            <button class="date-tab active" data-date="2025-11">2025-11</button>
+            <button class="date-tab" data-date="2025-10">2025-10</button>
+            <button class="date-tab" data-date="2025-09">2025-09</button>
+            <button class="date-tab" data-date="2025-08">2025-08</button>
+            <button class="date-tab" data-date="2025-07">2025-07</button>
+          </div>
+        </div>
+
+        <div class="content-area">
+          <div class="content-wrapper">
+            <div class="report-section">
+              <div class="report-section-header">
+                <h2>Dry Bulk 뉴스 미디어 분석</h2>
+                <div id="newsReportMeta" class="report-meta">2025-12 보고서</div>
+              </div>
+              <div id="newsReportContent" class="report-content">
+                <div class="loading">보고서를 불러오는 중...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="report-page.js"></script>
+  </body>
+</html>
